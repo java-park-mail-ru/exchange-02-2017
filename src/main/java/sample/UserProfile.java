@@ -1,6 +1,7 @@
 package sample;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Arrays;
@@ -20,7 +21,7 @@ public class UserProfile {
     private String firstName;
     @JsonProperty
     private String lastName;
-    @JsonProperty
+    @JsonIgnore
     private byte[] password;
     @JsonProperty
     private String email;
