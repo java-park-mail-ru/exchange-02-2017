@@ -1,9 +1,12 @@
-package sample;
+package sample.services;
 
 import org.springframework.stereotype.Service;
+import sample.UserProfile;
 
 import javax.jws.soap.SOAPBinding;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -32,7 +35,6 @@ public class AccountService {
     }
 
     public UserProfile getUserByLogin(String login){
-
         for (ConcurrentHashMap.Entry<Long, UserProfile> pair : users.entrySet()) {
             if(pair.getValue().getLogin().equals(login)){
                 return pair.getValue();
@@ -41,4 +43,12 @@ public class AccountService {
         return null;
     }
 
+    public void setUser(UserProfile updatedUser){
+        users.remove(updatedUser.getId());
+        users.put(updatedUser.getId(), updatedUser);
+    }
+
+    public ArrayList<UserProfile> getUsers(){
+        return new ArrayList<>(users.values());
+    }
 }
