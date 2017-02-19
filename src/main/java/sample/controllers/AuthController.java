@@ -1,10 +1,14 @@
-package sample;
+package sample.controllers;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.util.DigestUtils;
 import org.springframework.web.bind.annotation.*;
+import sample.services.AccountService;
+import sample.UserProfile;
 
 import javax.servlet.http.HttpSession;
 import java.util.Arrays;
@@ -25,38 +29,37 @@ public class AuthController {
     }
 
     @RequestMapping(method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-    public AuthResponse tryAuth(@RequestBody AuthRequest body,  HttpSession httpSession) {
-        String login = body.getLogin();
+    public ResponseEntity<AuthResponse> tryAuth(@RequestBody AuthRequest body, HttpSession httpSession) {
+        String login = body.getLogin().trim();
         byte[] password = DigestUtils.md5Digest(body.getPassword().getBytes());
 
-        if(login == null || login.trim().length()==0){
-            return new AuthResponse("false", "null");
+        if(login == null || login.length()<6 | login.length()>12){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new AuthResponse("null"));
         }
 
         UserProfile user = accountService.getUserByLogin(login);
         if(user == null || !Arrays.equals(user.getPassword(), password)){
-            return new AuthResponse("false", null);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new AuthResponse("null"));
         }
 
         httpSession.setAttribute("userId", user.getId().toString());
-        return new AuthResponse("true", user.getId().toString());
+        return ResponseEntity.status(HttpStatus.OK).body(new AuthResponse(user.getId().toString()));
     }
 
     @RequestMapping(method = RequestMethod.GET, produces = "application/json")
-    public AuthResponse checkAuth(HttpSession httpSession) {
+    public ResponseEntity<AuthResponse> checkAuth(HttpSession httpSession) {
         Object userId = httpSession.getAttribute("userId");
 
         if(userId != null){
-            return new AuthResponse("true", (String)userId);
+            return ResponseEntity.status(HttpStatus.OK).body(new AuthResponse((String)userId));
         }
-        return new AuthResponse("false", "null");
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new AuthResponse("null"));
     }
 
     @RequestMapping(method = RequestMethod.DELETE, produces = "application/json")
-    public AuthResponse exit(HttpSession httpSession) {
+    public ResponseEntity<AuthResponse> exit(HttpSession httpSession) {
         httpSession.setAttribute("userId", null);
-
-        return new AuthResponse("true", "null");
+        return ResponseEntity.status(HttpStatus.OK).body(new AuthResponse("null"));
     }
 
     private static final class AuthRequest{
@@ -79,17 +82,10 @@ public class AuthController {
     }
 
     private static final class AuthResponse{
-        private String status;
         private String userId;
 
-        AuthResponse(String status, String userId){
-            this.status = status;
+        AuthResponse(String userId){
             this.userId = userId;
-        }
-
-        @JsonProperty("status")
-        public String getStatus(){
-            return this.status;
         }
 
         @JsonProperty("userId")
