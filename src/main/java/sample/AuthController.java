@@ -3,9 +3,11 @@ package sample;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.DigestUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpSession;
+import java.util.Arrays;
 
 /**
  * Created by algys on 11.02.17.
@@ -25,14 +27,14 @@ public class AuthController {
     @RequestMapping(method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     public AuthResponse tryAuth(@RequestBody AuthRequest body,  HttpSession httpSession) {
         String login = body.getLogin();
-        String password = body.getPassword();
+        byte[] password = DigestUtils.md5Digest(body.getPassword().getBytes());
 
         if(login == null || login.trim().length()==0){
             return new AuthResponse("false", "null");
         }
 
         UserProfile user = accountService.getUserByLogin(login);
-        if(user == null || !user.getPassword().equals(password)){
+        if(user == null || !Arrays.equals(user.getPassword(), password)){
             return new AuthResponse("false", null);
         }
 

@@ -3,6 +3,7 @@ package sample;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.DigestUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpSession;
@@ -27,7 +28,7 @@ public class RegController {
         String lastName = body.getLastName();
         String email = body.getEmail();
         String login = body.getLogin();
-        String password = body.getPassword();
+        byte[] password = DigestUtils.md5Digest(body.getPassword().getBytes());
 
         if(accountService.hasUser(login)){
             return new RegResponse("false", "login busy");

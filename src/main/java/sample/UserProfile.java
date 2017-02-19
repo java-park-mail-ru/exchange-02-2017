@@ -3,6 +3,7 @@ package sample;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -20,14 +21,14 @@ public class UserProfile {
     @JsonProperty
     private String lastName;
     @JsonProperty
-    private String password;
+    private byte[] password;
     @JsonProperty
     private String email;
 
     private static final AtomicLong ID_GENERATOR = new AtomicLong(0);
 
     @JsonCreator
-    public UserProfile(String firstName, String lastName, String email, String login, String password){
+    public UserProfile(String firstName, String lastName, String email, String login, byte[] password){
         this.id = ID_GENERATOR.getAndIncrement();
         this.login = login;
         this.firstName = firstName;
@@ -52,7 +53,7 @@ public class UserProfile {
         this.lastName = lastName;
     }
 
-    public void setPassword(String password){
+    public void setPassword(byte[] password){
         this.password = password;
     }
 
@@ -76,7 +77,7 @@ public class UserProfile {
         return lastName;
     }
 
-    public String getPassword(){
+    public byte[] getPassword(){
         return password;
     }
 
@@ -97,7 +98,7 @@ public class UserProfile {
                 Objects.equals(this.firstName, profile.firstName) &&
                 Objects.equals(this.lastName, profile.lastName) &&
                 Objects.equals(this.email, profile.email) &&
-                Objects.equals(this.password, profile.password) &&
+                Arrays.equals(this.password, profile.password) &&
                 Objects.equals(this.login, profile.login);
     }
 
