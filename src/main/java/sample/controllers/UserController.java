@@ -3,24 +3,22 @@ package sample.controllers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.DigestUtils;
 import org.springframework.web.bind.annotation.*;
-import sample.UserProfile;
-import sample.controllers.requests.RegRequest;
-import sample.controllers.responses.StatusResponse;
+import sample.models.User;
+import sample.models.Status;
 import sample.services.AccountService;
 import sample.validators.Validator;
 
 import javax.servlet.http.HttpSession;
-import java.util.ArrayList;
 
 /**
  * Created by algys on 19.02.17.
  */
 
 @RestController
-@RequestMapping(path = "/user")
+@RequestMapping(path = "/api/user")
 public class UserController {
+
     private final AccountService accountService;
 
     @Autowired
@@ -28,96 +26,97 @@ public class UserController {
         this.accountService = accountService;
     }
 
-    @RequestMapping(method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-    public ResponseEntity<StatusResponse> registration(@RequestBody RegRequest body){
-        String firstName = body.getFirstName();
-        String lastName = body.getLastName();
+    @RequestMapping(method = RequestMethod.PUT, consumes = "application/json", produces = "application/json")
+    public ResponseEntity registration(@RequestBody User body){
         String email = body.getEmail();
-        String login = body.getLogin().trim();
-        byte[] password = DigestUtils.md5Digest(body.getPassword().getBytes());
+        String login = body.getLogin();
+        String password = body.getPassword();
 
-        if(login == null || !Validator.login(login)){
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(new StatusResponse("invalid login"));
+        if(login == null || !Validator.login(login.trim())){
+            return ResponseEntity.badRequest().body(new Status("invalid login"));
         }
+        login = login.trim();
 
         if(password == null){
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(new StatusResponse("invalid password"));
+            return ResponseEntity.badRequest().body(new Status("invalid password"));
         }
-
         if(email == null || !Validator.email(email)){
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(new StatusResponse("invalid email"));
+            return ResponseEntity.badRequest().body(new Status("invalid email"));
         }
 
-        if(accountService.hasUser(login)){
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(new StatusResponse("login busy"));
+        if(accountService.getUserByLogin(login) != null){
+            return ResponseEntity.badRequest().body(new Status("login already used"));
+        }
+        if(accountService.getUserByEmail(email) != null){
+            return ResponseEntity.badRequest().body(new Status("email already used"));
         }
 
-        UserProfile newUser = new UserProfile(firstName, lastName, email, login, password);
-        accountService.addUser(newUser);
-
-        return ResponseEntity.status(HttpStatus.OK).body(new StatusResponse("success registration"));
+        accountService.addUser(body);
+        return ResponseEntity.ok(new Status("success registration"));
     }
 
     @RequestMapping(method = RequestMethod.GET, consumes = "application/json")
-    public ResponseEntity<ArrayList<UserProfile>> getUsers(){
-        return ResponseEntity.status(HttpStatus.OK).body(accountService.getUsers());
+    public ResponseEntity getUser(HttpSession httpSession){
+        if(httpSession.getAttribute("userId") == null){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new Status("user not authorized"));
+        }
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(accountService.getUserById((String) httpSession.getAttribute("userId")).toView());
     }
 
     @RequestMapping(path = "/{userId}", method = RequestMethod.GET, consumes = "application/json")
-    public ResponseEntity<UserProfile> getUser(@PathVariable(name = "userId") String userId){
-        if(accountService.getUserById(userId) == null)
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+    public ResponseEntity getUser(@PathVariable(name = "userId") String userId,
+                                               HttpSession httpSession){
 
-        return ResponseEntity.status(HttpStatus.OK).body(accountService.getUserById(userId));
+        if(httpSession.getAttribute("userId") == null){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new Status("user not authorized"));
+        }
+
+        if(accountService.getUserById(userId) == null)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new Status("user not exist"));
+
+        return ResponseEntity.ok(accountService.getUserById(userId).toView());
     }
 
 
-    @RequestMapping(path = "/{userId}", method = RequestMethod.POST, consumes = "application/json")
-    public ResponseEntity<StatusResponse> changeUser(@PathVariable(name = "userId") String userId,
-                                                      @RequestBody RegRequest body, HttpSession httpSession){
+    @RequestMapping(method = RequestMethod.POST, consumes = "application/json")
+    public ResponseEntity changeUser(@RequestBody User body, HttpSession httpSession){
 
-        if(!CheckPermissions.check(httpSession, userId)){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new StatusResponse("permission denied"));
+        if(httpSession.getAttribute("userId") == null){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new Status("user not authorized"));
         }
+        String userId = (String) httpSession.getAttribute("userId");
+        User user = accountService.getUserById(userId);
 
         if(body.getEmail() != null) {
             if (!Validator.email(body.getEmail())) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new StatusResponse("bad email"));
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new Status("incorrect email"));
             }
-
-            UserProfile user = accountService.getUserById(userId);
+            if(accountService.getUserByEmail(body.getEmail()) != null){
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new Status("email already used"));
+            }
             user.setEmail(body.getEmail());
-            accountService.setUser(user);
         }
-
         if(body.getLogin() != null) {
             if (!Validator.login(body.getLogin())) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new StatusResponse("bad login"));
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new Status("incorrect login"));
             }
-
-            UserProfile user = accountService.getUserById(userId);
+            if(accountService.getUserByLogin(body.getLogin()) != null){
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new Status("login already used"));
+            }
             user.setLogin(body.getLogin());
-            accountService.setUser(user);
         }
-
+        if(body.getFirstName() != null) {
+            user.setFirstName(body.getFirstName());
+        }
+        if(body.getLastName() != null) {
+            user.setLastName(body.getLastName());
+        }
         if(body.getPassword() != null) {
-            if (!Validator.password(body.getPassword())) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new StatusResponse("bad password"));
-            }
-
-            UserProfile user = accountService.getUserById(userId);
-            user.setPassword(DigestUtils.md5Digest(body.getPassword().getBytes()));
-            accountService.setUser(user);
+            user.setPassword(body.getPassword());
         }
 
-        return ResponseEntity.status(HttpStatus.OK).body(new StatusResponse("success changing"));
-    }
-
-    private static final class CheckPermissions{
-        public static Boolean check(HttpSession httpSession, String userId){
-            if(httpSession.getAttribute("userId") == null)
-                return false;
-            return userId.equals((String) httpSession.getAttribute("userId"));
-        }
+        accountService.setUser(user);
+        return ResponseEntity.status(HttpStatus.OK).body(new Status("success changing"));
     }
 }

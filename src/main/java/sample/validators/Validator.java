@@ -15,7 +15,7 @@ public class Validator {
     }
 
     public static Boolean login(String login){
-        if(login.length()<6 | login.length()>12){
+        if(login.length()<3 | login.length()>16){
             return false;
         }
         return true;

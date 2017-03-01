@@ -1,4 +1,4 @@
-package sample;
+package sample.models;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * Created by algys on 18.02.17.
  */
 
-public class UserProfile {
+public class User {
     @JsonProperty
     private Long id;
     @JsonProperty
@@ -22,14 +22,18 @@ public class UserProfile {
     @JsonProperty
     private String lastName;
     @JsonIgnore
-    private byte[] password;
+    private String password;
     @JsonProperty
     private String email;
 
     private static final AtomicLong ID_GENERATOR = new AtomicLong(0);
 
     @JsonCreator
-    public UserProfile(String firstName, String lastName, String email, String login, byte[] password){
+    public User(@JsonProperty("firstName") String firstName,
+                @JsonProperty("lastName") String lastName,
+                @JsonProperty("email") String email,
+                @JsonProperty("login") String login,
+                @JsonProperty("password") String password){
         this.id = ID_GENERATOR.getAndIncrement();
         this.login = login;
         this.firstName = firstName;
@@ -38,7 +42,7 @@ public class UserProfile {
         this.email = email;
     }
 
-    public UserProfile(){
+    public User(){
         this.id = ID_GENERATOR.getAndIncrement();
     }
 
@@ -54,7 +58,7 @@ public class UserProfile {
         this.lastName = lastName;
     }
 
-    public void setPassword(byte[] password){
+    public void setPassword(String password){
         this.password = password;
     }
 
@@ -78,7 +82,7 @@ public class UserProfile {
         return lastName;
     }
 
-    public byte[] getPassword(){
+    public String getPassword(){
         return password;
     }
 
@@ -94,12 +98,12 @@ public class UserProfile {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        UserProfile profile = (UserProfile) o;
+        User profile = (User) o;
         return Objects.equals(this.id, profile.id) &&
                 Objects.equals(this.firstName, profile.firstName) &&
                 Objects.equals(this.lastName, profile.lastName) &&
                 Objects.equals(this.email, profile.email) &&
-                Arrays.equals(this.password, profile.password) &&
+                Objects.equals(this.password, profile.password) &&
                 Objects.equals(this.login, profile.login);
     }
 
@@ -108,4 +112,7 @@ public class UserProfile {
         return Objects.hash(id, firstName, lastName, email, login, password);
     }
 
+    public UserView toView(){
+        return new UserView(this);
+    }
 }
