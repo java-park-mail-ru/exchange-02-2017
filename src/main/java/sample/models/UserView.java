@@ -1,16 +1,15 @@
 package sample.models;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Created by algys on 18.02.17.
  */
 
+@SuppressWarnings("ALL")
 public class UserView {
     @JsonProperty
     private Long id;
@@ -34,7 +33,7 @@ public class UserView {
         this.firstName = firstName;
         this.lastName = lastName;
     }
-    public UserView(User user){
+    UserView(User user){
         this.id = user.getId();
         this.login = user.getLogin();
         this.firstName = user.getFirstName();

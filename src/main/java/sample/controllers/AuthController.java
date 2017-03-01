@@ -9,14 +9,19 @@ import sample.services.AccountService;
 import sample.models.User;
 
 import javax.servlet.http.HttpSession;
-import java.util.Arrays;
 import java.util.Objects;
 
 /**
  * Created by algys on 11.02.17.
  */
 
+@SuppressWarnings("ALL")
 @RestController
+@CrossOrigin(
+        methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE},
+        maxAge = 3600,
+        allowedHeaders = {"Content-Type"}
+)
 @RequestMapping(path = "/api/login")
 public class AuthController {
 

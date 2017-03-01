@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.Arrays;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -12,6 +11,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * Created by algys on 18.02.17.
  */
 
+@SuppressWarnings("ALL")
 public class User {
     @JsonProperty
     private Long id;

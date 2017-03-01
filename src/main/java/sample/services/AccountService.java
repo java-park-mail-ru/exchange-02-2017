@@ -10,6 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Created by algys on 18.02.17.
  */
 
+@SuppressWarnings("ALL")
 @Service
 public class AccountService {
     private ConcurrentHashMap<Long, User> users = new ConcurrentHashMap<>();
