@@ -16,6 +16,11 @@ import javax.servlet.http.HttpSession;
  */
 
 @RestController
+@CrossOrigin(
+        methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE},
+        maxAge = 3600,
+        allowedHeaders = {"Content-Type"}
+)
 @RequestMapping(path = "/api/user")
 public class UserController {
 
