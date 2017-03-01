@@ -79,7 +79,7 @@
     
     {"status": "..."}
     
- ##5.Выход
+##6.Выход
 
   path = /api/login, method = DELETE
    
