@@ -5,17 +5,22 @@ import sample.models.User;
 
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Created by algys on 18.02.17.
  */
 
-@SuppressWarnings("ALL")
+
+@SuppressWarnings({"unused", "DefaultFileTemplate"})
 @Service
 public class AccountService {
-    private ConcurrentHashMap<Long, User> users = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Long, User> users = new ConcurrentHashMap<>();
+
+    private static final AtomicLong ID_GENERATOR = new AtomicLong(0);
 
     public void addUser(User newUser){
+        newUser.setId(ID_GENERATOR.getAndIncrement());
         users.put(newUser.getId(), newUser);
     }
 

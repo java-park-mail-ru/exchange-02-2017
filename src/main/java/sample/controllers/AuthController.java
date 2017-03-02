@@ -9,13 +9,13 @@ import sample.services.AccountService;
 import sample.models.User;
 
 import javax.servlet.http.HttpSession;
-import java.util.Objects;
 
 /**
  * Created by algys on 11.02.17.
  */
 
-@SuppressWarnings("ALL")
+
+@SuppressWarnings({"WeakerAccess", "DefaultFileTemplate"})
 @RestController
 @CrossOrigin(
         methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE},
@@ -37,8 +37,8 @@ public class AuthController {
         String login = body.getLogin();
         String password = body.getPassword();
 
-        if(login == null || login.trim().length()<6 | login.trim().length()>12){
-            return ResponseEntity.badRequest().body(new Status("login incorrect"));
+        if(login == null){
+            return ResponseEntity.badRequest().body(new Status("incorrect login"));
         }
         login = login.trim();
 
@@ -46,7 +46,7 @@ public class AuthController {
         if(user == null){
             return ResponseEntity.badRequest().body(new Status("incorrect login"));
         }
-        if(!Objects.equals(user.getPassword(), password)){
+        if(!user.getPassword().equals(password)){
             return ResponseEntity.badRequest().body(new Status("incorrect password"));
         }
 

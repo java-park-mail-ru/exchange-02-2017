@@ -5,13 +5,13 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Created by algys on 18.02.17.
  */
 
-@SuppressWarnings("ALL")
+
+@SuppressWarnings("DefaultFileTemplate")
 public class User {
     @JsonProperty
     private Long id;
@@ -26,24 +26,18 @@ public class User {
     @JsonProperty
     private String email;
 
-    private static final AtomicLong ID_GENERATOR = new AtomicLong(0);
-
+    @SuppressWarnings("unused")
     @JsonCreator
     public User(@JsonProperty("firstName") String firstName,
                 @JsonProperty("lastName") String lastName,
                 @JsonProperty("email") String email,
                 @JsonProperty("login") String login,
                 @JsonProperty("password") String password){
-        this.id = ID_GENERATOR.getAndIncrement();
         this.login = login;
         this.firstName = firstName;
         this.lastName = lastName;
         this.password  = password;
         this.email = email;
-    }
-
-    public User(){
-        this.id = ID_GENERATOR.getAndIncrement();
     }
 
     public void setLogin(String login){
@@ -72,6 +66,10 @@ public class User {
 
     public Long getId(){
         return id;
+    }
+
+    public void setId(Long id){
+        this.id = id;
     }
 
     public String getFirstName(){

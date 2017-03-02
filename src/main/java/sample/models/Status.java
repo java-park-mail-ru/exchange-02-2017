@@ -5,14 +5,17 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 /**
  * Created by algys on 19.02.17.
  */
-@SuppressWarnings("ALL")
+
+
+@SuppressWarnings("DefaultFileTemplate")
 public class Status {
-    private String status;
+    private final String status;
 
     public Status(String status){
         this.status = status;
     }
 
+    @SuppressWarnings("unused")
     @JsonProperty("status")
     public String getStatus(){
         return this.status;

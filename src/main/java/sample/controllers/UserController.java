@@ -15,7 +15,8 @@ import javax.servlet.http.HttpSession;
  * Created by algys on 19.02.17.
  */
 
-@SuppressWarnings("ALL")
+
+@SuppressWarnings({"WeakerAccess", "DefaultFileTemplate"})
 @RestController
 @CrossOrigin(
         methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE},
