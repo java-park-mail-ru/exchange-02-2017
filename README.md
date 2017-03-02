@@ -13,7 +13,7 @@
 * Динияр Кадырбеков
 
 #Ссыллка на API
-  ###https://cyclic-server-api-test.herokuapp.com
+  https://cyclic-server-api-test.herokuapp.com
 
 #Описание REST API
 
