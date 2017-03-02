@@ -12,7 +12,10 @@
 * Алексей Набережный
 * Динияр Кадырбеков
 
-#REST API
+#Ссыллка на API
+  ###https://cyclic-server-api-test.herokuapp.com
+
+#Описание REST API
 
 ##1.Регистрация
 
