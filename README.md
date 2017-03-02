@@ -13,7 +13,10 @@
 * Динияр Кадырбеков
 
 #Ссыллка на API
-  ###https://cyclic-server-api-test.herokuapp.com
+  https://cyclic-server-api-test.herokuapp.com/api
+  
+#Ссыллка на Swagger
+  https://app.swaggerhub.com/api/algys/cyclic-server-api/1.0.0
 
 #Описание REST API
 
@@ -43,7 +46,7 @@
     
     {"status": "..."}
     
-##3.Полученние данных о пользователе
+##3.Полученние данных о текущем пользователе
 
   path = /api/user, method = GET
   
@@ -57,7 +60,7 @@
       "lastName": "...",
     }
     
-##4.Полученние данных о текущем пользователе
+##4.Полученние данных о пользователе по id
 
   path = /api/user/{id}, method = GET
        
