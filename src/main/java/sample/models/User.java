@@ -88,28 +88,6 @@ public class User {
         return email;
     }
 
-    @Override
-    public boolean equals(Object o){
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        User profile = (User) o;
-        return Objects.equals(this.id, profile.id) &&
-                Objects.equals(this.firstName, profile.firstName) &&
-                Objects.equals(this.lastName, profile.lastName) &&
-                Objects.equals(this.email, profile.email) &&
-                Objects.equals(this.password, profile.password) &&
-                Objects.equals(this.login, profile.login);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id, firstName, lastName, email, login, password);
-    }
-
     public UserView toView(){
         return new UserView(this);
     }
