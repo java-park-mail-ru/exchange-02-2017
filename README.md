@@ -14,9 +14,6 @@
 
 #Ссыллка на API
   https://cyclic-server-api-test.herokuapp.com/api
-  
-#Ссыллка на Swagger
-  https://app.swaggerhub.com/api/algys/cyclic-server-api/1.0.0
 
 #Описание REST API
 
