@@ -64,7 +64,7 @@ public class UserController {
         return ResponseEntity.ok(new Status("success registration"));
     }
 
-    @RequestMapping(method = RequestMethod.GET, consumes = "application/json")
+    @RequestMapping(method = RequestMethod.GET, produces = "application/json")
     public ResponseEntity getUser(HttpSession httpSession){
         if(httpSession.getAttribute("userId") == null){
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new Status("user not authorized"));
@@ -73,7 +73,7 @@ public class UserController {
                 .body(accountService.getUserById((String) httpSession.getAttribute("userId")).toView());
     }
 
-    @RequestMapping(path = "/{userId}", method = RequestMethod.GET, consumes = "application/json")
+    @RequestMapping(path = "/{userId}", method = RequestMethod.GET, produces = "application/json")
     public ResponseEntity getUser(@PathVariable(name = "userId") String userId,
                                                HttpSession httpSession){
 
