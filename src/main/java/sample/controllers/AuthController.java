@@ -20,7 +20,9 @@ import javax.servlet.http.HttpSession;
 @CrossOrigin(
         methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE},
         maxAge = 3600,
-        allowedHeaders = {"Content-Type"}
+        allowedHeaders = {"Content-Type", "Origin", "X-Requested-With", "Accept"},
+        allowCredentials = "true",
+        origins = {"editor.swagger.io"}
 )
 @RequestMapping(path = "/api/login")
 public class AuthController {
