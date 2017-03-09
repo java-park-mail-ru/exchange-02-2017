@@ -7,7 +7,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * Created by algys on 08.02.17.
  */
 
-//@SuppressWarnings("ALL")
+
 @SuppressWarnings({"DefaultFileTemplate", "SpringFacetCodeInspection", "WeakerAccess"})
 @SpringBootApplication
 public class Application {
