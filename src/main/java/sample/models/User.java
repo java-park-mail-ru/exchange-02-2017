@@ -1,9 +1,14 @@
 package sample.models;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonGenerationException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.io.IOException;
 import java.util.Objects;
 
 /**
@@ -12,6 +17,7 @@ import java.util.Objects;
 
 
 @SuppressWarnings("DefaultFileTemplate")
+@JsonAutoDetect(fieldVisibility=JsonAutoDetect.Visibility.ANY, getterVisibility=JsonAutoDetect.Visibility.NONE, setterVisibility=JsonAutoDetect.Visibility.NONE, creatorVisibility=JsonAutoDetect.Visibility.NONE)
 public class User {
     @JsonProperty
     private Long id;
@@ -86,6 +92,11 @@ public class User {
 
     public String getEmail(){
         return email;
+    }
+
+    public String getAsJSON() throws JsonGenerationException, JsonMappingException, IOException {
+        ObjectMapper mapper = new ObjectMapper();
+        return mapper.writeValueAsString(this) ;
     }
 
     public UserView toView(){
