@@ -25,7 +25,7 @@ import java.io.IOException;
         maxAge = 3600,
         allowedHeaders = {"Content-Type", "Origin", "X-Requested-With", "Accept"},
         allowCredentials = "true",
-        origins = "http://editor.swagger.io"
+        origins = "*"
 )
 @RequestMapping(path = "/api/user")
 public class UserController {

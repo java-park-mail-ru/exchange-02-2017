@@ -21,8 +21,8 @@ import javax.servlet.http.HttpSession;
         methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE},
         maxAge = 3600,
         allowedHeaders = {"Content-Type", "Origin", "X-Requested-With", "Accept"},
-        allowCredentials = "true",
-        origins = "http://editor.swagger.io"
+   //     allowCredentials = "true",
+        origins = "*"
 )
 @RequestMapping(path = "/api/login")
 public class AuthController {
