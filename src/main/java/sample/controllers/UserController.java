@@ -23,7 +23,7 @@ import javax.servlet.http.HttpSession;
         maxAge = 3600,
         allowedHeaders = {"Content-Type", "Origin", "X-Requested-With", "Accept"},
         allowCredentials = "true",
-        origins = "http://editor.swagger.io"
+        origins = {"http://editor.swagger.io", "http://localhost:63342"}
 )
 @RequestMapping(path = "/api/user")
 public class UserController {
