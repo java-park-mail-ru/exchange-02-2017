@@ -40,16 +40,16 @@ public class AuthController {
         String password = body.getPassword();
 
         if(login == null){
-            return ResponseEntity.badRequest().body(new Status(Status.ERROR_LOGIN, "incorrect login"));
+            return ResponseEntity.ok(new Status(Status.ERROR_LOGIN, "incorrect login"));
         }
         login = login.trim();
 
         User user = accountService.getUserByLogin(login);
         if(user == null){
-            return ResponseEntity.badRequest().body(new Status(Status.ERROR_LOGIN, "incorrect login"));
+            return ResponseEntity.ok(new Status(Status.ERROR_LOGIN, "incorrect login"));
         }
         if(!user.getPassword().equals(password)){
-            return ResponseEntity.badRequest().body(new Status(Status.ERROR_PASSWORD, "incorrect password"));
+            return ResponseEntity.ok(new Status(Status.ERROR_PASSWORD, "incorrect password"));
         }
 
         httpSession.setAttribute("userId", user.getId().toString());
@@ -59,7 +59,7 @@ public class AuthController {
     @RequestMapping(method = RequestMethod.DELETE, produces = "application/json")
     public ResponseEntity exit(HttpSession httpSession) {
         if(httpSession.getAttribute("userId")==null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new Status(Status.ERROR_UNAUTHORIZED, "user not authorized"));
+            return ResponseEntity.ok(new Status(Status.ERROR_UNAUTHORIZED, "user not authorized"));
         }
         httpSession.removeAttribute("userId");
         return ResponseEntity.ok(new Status(Status.OK, "success exited"));
