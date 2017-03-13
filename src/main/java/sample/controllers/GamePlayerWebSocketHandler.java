@@ -12,7 +12,7 @@ public class GamePlayerWebSocketHandler extends TextWebSocketHandler {
 
     @Override
     public void handleTransportError(WebSocketSession session, Throwable throwable) throws Exception {
-        //System.out.println("error occured at sender " + session);
+        System.out.println("error occured at sender " + session);
     }
 
     @Override
@@ -24,6 +24,7 @@ public class GamePlayerWebSocketHandler extends TextWebSocketHandler {
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         ConnectedSessionsService.addClient(session);
     }
+
 
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage jsonTextMessage) throws Exception {

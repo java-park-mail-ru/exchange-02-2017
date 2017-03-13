@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import sample.models.Status;
 import sample.services.AccountService;
 import sample.models.User;
+import sample.services.AuthorizationService;
 
 import javax.servlet.http.HttpSession;
 
@@ -21,17 +22,19 @@ import javax.servlet.http.HttpSession;
         methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE},
         maxAge = 3600,
         allowedHeaders = {"Content-Type", "Origin", "X-Requested-With", "Accept"},
-   //     allowCredentials = "true",
+        allowCredentials = "true",
         origins = "*"
 )
 @RequestMapping(path = "/api/login")
 public class AuthController {
 
     private final AccountService accountService;
+    private final AuthorizationService authorizationService;
 
     @Autowired
-    public AuthController(AccountService accountService){
+    public AuthController(AccountService accountService, AuthorizationService authorizationService){
         this.accountService = accountService;
+        this.authorizationService = authorizationService;
     }
 
     @RequestMapping(method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
@@ -40,29 +43,34 @@ public class AuthController {
         String password = body.getPassword();
 
         if(login == null){
-            return ResponseEntity.ok(new Status(Status.ERROR_LOGIN, "incorrect login"));
+            return ResponseEntity.badRequest().body(new Status("incorrect login"));
         }
         login = login.trim();
 
         User user = accountService.getUserByLogin(login);
         if(user == null){
-            return ResponseEntity.ok(new Status(Status.ERROR_LOGIN, "incorrect login"));
+            return ResponseEntity.badRequest().body(new Status("incorrect login"));
         }
         if(!user.getPassword().equals(password)){
-            return ResponseEntity.ok(new Status(Status.ERROR_PASSWORD, "incorrect password"));
+            return ResponseEntity.badRequest().body(new Status("incorrect password"));
         }
 
         httpSession.setAttribute("userId", user.getId().toString());
-        return ResponseEntity.ok(new Status(Status.OK, "success login"));
+        authorizationService.add(user.getId());
+
+        return ResponseEntity.ok(new Status("success login"));
     }
 
     @RequestMapping(method = RequestMethod.DELETE, produces = "application/json")
     public ResponseEntity exit(HttpSession httpSession) {
         if(httpSession.getAttribute("userId")==null) {
-            return ResponseEntity.ok(new Status(Status.ERROR_UNAUTHORIZED, "user not authorized"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new Status("user not authorized"));
         }
+        Long userId = Long.parseLong(httpSession.getAttribute("userId").toString());
         httpSession.removeAttribute("userId");
-        return ResponseEntity.ok(new Status(Status.OK, "success exited"));
+        authorizationService.remove(userId);
+
+        return ResponseEntity.ok(new Status("success exited"));
     }
 
 

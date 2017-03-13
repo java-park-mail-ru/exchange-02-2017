@@ -10,28 +10,15 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 @SuppressWarnings("DefaultFileTemplate")
 public class Status {
-    public static Integer OK = 0;
-    public static Integer ERROR_PASSWORD = 1;
-    public static Integer ERROR_LOGIN = 2;
-    public static Integer ERROR_EMAIL = 3;
-    public static Integer ERROR_UNAUTHORIZED = 4;
+    private final String status;
 
-    private final Integer code;
-    private final String description;
-
-    public Status(Integer code, String description){
-        this.code = code;
-        this.description = description;
+    public Status(String status){
+        this.status = status;
     }
 
     @SuppressWarnings("unused")
-    @JsonProperty("code")
-    public Integer getCode(){
-        return this.code;
-    }
-
-    @JsonProperty("description")
-    public String getDescription() {
-        return description;
+    @JsonProperty("status")
+    public String getStatus() {
+        return status;
     }
 }

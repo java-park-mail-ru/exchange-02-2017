@@ -31,7 +31,6 @@ import java.io.IOException;
 public class UserController {
 
     private final AccountService accountService;
-    private final ObjectMapper jmap = new ObjectMapper();
 
     @Autowired
     public UserController(AccountService accountService){
@@ -45,39 +44,35 @@ public class UserController {
         String password = body.getPassword();
 
         if(login == null || !Validator.login(login.trim())){
-            return ResponseEntity.ok(new Status(Status.ERROR_LOGIN, "invalid login"));
+            return ResponseEntity.badRequest().body(new Status("invalid login"));
         }
         login = login.trim();
 
         if(password == null){
-            return ResponseEntity.ok(new Status(Status.ERROR_PASSWORD, "invalid password"));
+            return ResponseEntity.badRequest().body(new Status("invalid password"));
         }
         if(email == null || !Validator.email(email)){
-            return ResponseEntity.ok(new Status(Status.ERROR_EMAIL, "invalid email"));
+            return ResponseEntity.badRequest().body(new Status("invalid email"));
         }
 
         if(accountService.getUserByLogin(login) != null){
-            return ResponseEntity.ok(new Status(Status.ERROR_LOGIN, "login already used"));
+            return ResponseEntity.badRequest().body(new Status("login already used"));
         }
         if(accountService.getUserByEmail(email) != null){
-            return ResponseEntity.ok(new Status(Status.ERROR_EMAIL, "email already used"));
+            return ResponseEntity.badRequest().body(new Status("email already used"));
         }
 
         accountService.addUser(body);
-        return ResponseEntity.ok(new Status(Status.OK,"success registration"));
+        return ResponseEntity.ok(new Status("success registration"));
     }
 
     @RequestMapping(method = RequestMethod.GET, produces = "application/json")
     public ResponseEntity getUser(HttpSession httpSession){
         if(httpSession.getAttribute("userId") == null){
-            return ResponseEntity.ok(new Status(Status.ERROR_UNAUTHORIZED, "user not authorized"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new Status("user not authorized"));
         }
-        try {
-            return ResponseEntity.ok(new Status(Status.OK, accountService.getUserById((String) httpSession.getAttribute("userId")).toView().getAsJSON()));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return ResponseEntity.notFound().build();
+
+        return ResponseEntity.ok(accountService.getUserById((String) httpSession.getAttribute("userId")).toView());
     }
 
     @RequestMapping(path = "/{userId}", method = RequestMethod.GET, produces = "application/json")
@@ -85,18 +80,13 @@ public class UserController {
                                                HttpSession httpSession) throws IOException {
 
         if(httpSession.getAttribute("userId") == null){
-            return ResponseEntity.ok(new Status(Status.ERROR_UNAUTHORIZED, "user not authorized"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new Status("user not authorized"));
         }
 
         if(accountService.getUserById(userId) == null)
-            return ResponseEntity.ok(new Status(Status.OK, "user not exist"));
+            return ResponseEntity.badRequest().body(new Status("user not exist"));
 
-        try {
-            return ResponseEntity.ok(new Status(Status.OK, accountService.getUserById(userId).toView().getAsJSON()));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(accountService.getUserById(userId).toView());
     }
 
 
@@ -104,26 +94,26 @@ public class UserController {
     public ResponseEntity changeUser(@RequestBody User body, HttpSession httpSession){
 
         if(httpSession.getAttribute("userId") == null){
-            return ResponseEntity.ok(new Status(Status.ERROR_UNAUTHORIZED, "user not authorized"));
+            return ResponseEntity.badRequest().body(new Status("user not authorized"));
         }
         String userId = (String) httpSession.getAttribute("userId");
         User user = accountService.getUserById(userId);
 
         if(body.getEmail() != null) {
             if (!Validator.email(body.getEmail())) {
-                return ResponseEntity.ok(new Status(Status.ERROR_EMAIL, "incorrect email"));
+                return ResponseEntity.badRequest().body(new Status("incorrect email"));
             }
             if(accountService.getUserByEmail(body.getEmail()) != null){
-                return ResponseEntity.ok(new Status(Status.ERROR_EMAIL, "email already used"));
+                return ResponseEntity.badRequest().body(new Status("email already used"));
             }
             user.setEmail(body.getEmail());
         }
         if(body.getLogin() != null) {
             if (!Validator.login(body.getLogin())) {
-                return ResponseEntity.ok(new Status(Status.ERROR_LOGIN, "incorrect login"));
+                return ResponseEntity.badRequest().body(new Status("incorrect login"));
             }
             if(accountService.getUserByLogin(body.getLogin()) != null){
-                return ResponseEntity.ok(new Status(Status.ERROR_LOGIN, "login already used"));
+                return ResponseEntity.badRequest().body(new Status("login already used"));
             }
             user.setLogin(body.getLogin());
         }
@@ -138,6 +128,6 @@ public class UserController {
         }
 
         accountService.setUser(user);
-        return ResponseEntity.ok(new Status(Status.OK, "success changing"));
+        return ResponseEntity.ok(new Status("success changing"));
     }
 }
