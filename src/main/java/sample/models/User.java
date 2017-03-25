@@ -34,11 +34,13 @@ public class User {
 
     @SuppressWarnings("unused")
     @JsonCreator
-    public User(@JsonProperty("firstName") String firstName,
+    public User(@JsonProperty(value = "id") Long id,
+                @JsonProperty("firstName") String firstName,
                 @JsonProperty("lastName") String lastName,
                 @JsonProperty("email") String email,
                 @JsonProperty("login") String login,
                 @JsonProperty("password") String password){
+        this.id = id;
         this.login = login;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -92,11 +94,6 @@ public class User {
 
     public String getEmail(){
         return email;
-    }
-
-    public String getAsJSON() throws JsonGenerationException, JsonMappingException, IOException {
-        ObjectMapper mapper = new ObjectMapper();
-        return mapper.writeValueAsString(this) ;
     }
 
     public UserView toView(){
