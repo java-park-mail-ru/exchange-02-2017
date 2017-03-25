@@ -7,6 +7,8 @@ import org.springframework.web.bind.annotation.*;
 import sample.models.Status;
 import sample.services.AccountService;
 import sample.models.User;
+import sample.services.AccountServiceDB;
+import sample.services.AccountServiceMap;
 import sample.services.AuthorizationService;
 
 import javax.servlet.http.HttpSession;
@@ -32,7 +34,7 @@ public class AuthController {
     private final AuthorizationService authorizationService;
 
     @Autowired
-    public AuthController(AccountService accountService, AuthorizationService authorizationService){
+    public AuthController(AccountServiceDB accountService, AuthorizationService authorizationService){
         this.accountService = accountService;
         this.authorizationService = authorizationService;
     }
@@ -55,8 +57,8 @@ public class AuthController {
             return ResponseEntity.badRequest().body(new Status("incorrect password"));
         }
 
-        httpSession.setAttribute("userId", user.getId().toString());
-        authorizationService.add(user.getId());
+        httpSession.setAttribute("userId", user.getId());
+        authorizationService.add(httpSession, user.getId());
 
         return ResponseEntity.ok(new Status("success login"));
     }
@@ -66,9 +68,8 @@ public class AuthController {
         if(httpSession.getAttribute("userId")==null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new Status("user not authorized"));
         }
-        Long userId = Long.parseLong(httpSession.getAttribute("userId").toString());
         httpSession.removeAttribute("userId");
-        authorizationService.remove(userId);
+        authorizationService.remove(httpSession);
 
         return ResponseEntity.ok(new Status("success exited"));
     }

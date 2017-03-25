@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.*;
 import sample.models.User;
 import sample.models.Status;
 import sample.services.AccountService;
+import sample.services.AccountServiceDB;
+import sample.services.AccountServiceMap;
 import sample.validators.Validator;
 
 import javax.servlet.http.HttpSession;
@@ -33,7 +35,7 @@ public class UserController {
     private final AccountService accountService;
 
     @Autowired
-    public UserController(AccountService accountService){
+    public UserController(AccountServiceDB accountService){
         this.accountService = accountService;
     }
 
@@ -72,11 +74,11 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new Status("user not authorized"));
         }
 
-        return ResponseEntity.ok(accountService.getUserById((String) httpSession.getAttribute("userId")).toView());
+        return ResponseEntity.ok(accountService.getUserById((Long) httpSession.getAttribute("userId")).toView());
     }
 
     @RequestMapping(path = "/{userId}", method = RequestMethod.GET, produces = "application/json")
-    public ResponseEntity getUser(@PathVariable(name = "userId") String userId,
+    public ResponseEntity getUser(@PathVariable(name = "userId") Long userId,
                                                HttpSession httpSession) throws IOException {
 
         if(httpSession.getAttribute("userId") == null){
@@ -96,7 +98,7 @@ public class UserController {
         if(httpSession.getAttribute("userId") == null){
             return ResponseEntity.badRequest().body(new Status("user not authorized"));
         }
-        String userId = (String) httpSession.getAttribute("userId");
+        Long userId = (Long) httpSession.getAttribute("userId");
         User user = accountService.getUserById(userId);
 
         if(body.getEmail() != null) {
