@@ -2,8 +2,8 @@ package sample.services;
 
 import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
-import java.util.Set;
+import javax.servlet.http.HttpSession;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by algys on 12.03.17.
@@ -11,17 +11,17 @@ import java.util.Set;
 
 @Service
 public class AuthorizationService {
-    private HashSet<Long> authorizedUsers = new HashSet<>();
+    private ConcurrentHashMap<HttpSession, Long> authorizedUsers = new ConcurrentHashMap<>();
 
-    public void add(Long userId){
-        authorizedUsers.add(userId);
+    public void add(HttpSession httpSession, Long userId){
+        authorizedUsers.put(httpSession, userId);
     }
 
-    public void remove(Long userId){
-        authorizedUsers.remove(userId);
+    public void remove(HttpSession httpSession){
+        authorizedUsers.remove(httpSession);
     }
 
-    public boolean isLogged(Long userId){
-        return authorizedUsers.contains(userId);
+    public boolean isLogged(HttpSession httpSession){
+        return authorizedUsers.containsKey(httpSession);
     }
 }
