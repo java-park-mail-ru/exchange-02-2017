@@ -8,17 +8,17 @@ import java.util.Vector;
 @SuppressWarnings({"unused", "DefaultFileTemplate"})
 @Service
 public class ConnectedSessionsService {
-    static private Vector<WebSocketSession> webSocketSessions = new Vector<>();
+    private Vector<WebSocketSession> webSocketSessions = new Vector<>();
 
-    static public void addClient(WebSocketSession session) {
+    public void addClient(WebSocketSession session) {
         webSocketSessions.add(session);
     }
 
-    static public void removeClient(WebSocketSession session) {
+    public void removeClient(WebSocketSession session) {
         webSocketSessions.remove(session);
     }
 
-    static public Vector<WebSocketSession> getClients() {
+    public Vector<WebSocketSession> getClients() {
         return webSocketSessions;
     }
 

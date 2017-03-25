@@ -1,14 +1,19 @@
 package sample.controllers;
 
-import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 import sample.services.ConnectedSessionsService;
 
-@Component
+
 public class GamePlayerWebSocketHandler extends TextWebSocketHandler {
+
+    private ConnectedSessionsService connectedSessionsService;
+
+    public GamePlayerWebSocketHandler(ConnectedSessionsService connectedSessionsService){
+        this.connectedSessionsService = connectedSessionsService;
+    }
 
     @Override
     public void handleTransportError(WebSocketSession session, Throwable throwable) throws Exception {
@@ -17,12 +22,12 @@ public class GamePlayerWebSocketHandler extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
-        ConnectedSessionsService.removeClient(session);
+        connectedSessionsService.removeClient(session);
     }
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-        ConnectedSessionsService.addClient(session);
+        connectedSessionsService.addClient(session);
     }
 
 
