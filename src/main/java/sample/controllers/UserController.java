@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import sample.models.User;
 import sample.models.Status;
@@ -33,10 +34,12 @@ import java.io.IOException;
 public class UserController {
 
     private final AccountService accountService;
+    private final PasswordEncoder passwordEncoder;
 
     @Autowired
-    public UserController(AccountServiceDB accountService){
+    public UserController(AccountServiceDB accountService, PasswordEncoder passwordEncoder){
         this.accountService = accountService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @RequestMapping(method = RequestMethod.PUT, consumes = "application/json", produces = "application/json")
@@ -64,6 +67,7 @@ public class UserController {
             return ResponseEntity.badRequest().body(new Status("email already used"));
         }
 
+        body.setPassword(passwordEncoder.encode(password));
         accountService.addUser(body);
         return ResponseEntity.ok(new Status("success registration"));
     }
@@ -126,7 +130,7 @@ public class UserController {
             user.setLastName(body.getLastName());
         }
         if(body.getPassword() != null) {
-            user.setPassword(body.getPassword());
+            user.setPassword(passwordEncoder.encode(body.getPassword()));
         }
 
         accountService.setUser(user);

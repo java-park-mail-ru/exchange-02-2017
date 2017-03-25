@@ -3,6 +3,7 @@ package sample.controllers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import sample.models.Status;
 import sample.services.AccountService;
@@ -32,11 +33,14 @@ public class AuthController {
 
     private final AccountService accountService;
     private final AuthorizationService authorizationService;
+    private final PasswordEncoder passwordEncoder;
 
     @Autowired
-    public AuthController(AccountServiceDB accountService, AuthorizationService authorizationService){
+    public AuthController(AccountServiceDB accountService, AuthorizationService authorizationService,
+                          PasswordEncoder passwordEncoder){
         this.accountService = accountService;
         this.authorizationService = authorizationService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @RequestMapping(method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
@@ -53,7 +57,7 @@ public class AuthController {
         if(user == null){
             return ResponseEntity.badRequest().body(new Status("incorrect login"));
         }
-        if(!user.getPassword().equals(password)){
+        if(!passwordEncoder.matches(password, user.getPassword())){
             return ResponseEntity.badRequest().body(new Status("incorrect password"));
         }
 
