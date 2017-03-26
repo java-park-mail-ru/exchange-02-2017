@@ -1,4 +1,4 @@
-package sample.validators;
+package com.cyclic.validators;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

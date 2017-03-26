@@ -1,4 +1,4 @@
-package sample.configs;
+package com.cyclic.configs;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -8,8 +8,8 @@ import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
-import sample.controllers.GamePlayerWebSocketHandler;
-import sample.services.ConnectedSessionsService;
+import com.cyclic.controllers.GamePlayerWebSocketHandler;
+import com.cyclic.services.ConnectedSessionsService;
 
 @Configuration
 @EnableWebSocket

@@ -1,10 +1,10 @@
-package sample.controllers;
+package com.cyclic.controllers;
 
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
-import sample.services.ConnectedSessionsService;
+import com.cyclic.services.ConnectedSessionsService;
 
 
 public class GamePlayerWebSocketHandler extends TextWebSocketHandler {

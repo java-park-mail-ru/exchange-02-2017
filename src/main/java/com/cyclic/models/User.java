@@ -1,23 +1,18 @@
-package sample.models;
+package com.cyclic.models;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonGenerationException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import java.io.IOException;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Created by algys on 18.02.17.
  */
 
 
-@SuppressWarnings({"unused", "DefaultFileTemplate"})
+@SuppressWarnings("DefaultFileTemplate")
 @JsonAutoDetect(fieldVisibility=JsonAutoDetect.Visibility.ANY, getterVisibility=JsonAutoDetect.Visibility.NONE, setterVisibility=JsonAutoDetect.Visibility.NONE, creatorVisibility=JsonAutoDetect.Visibility.NONE)
-public class UserView {
+public class User {
     @JsonProperty
     private Long id;
     @JsonProperty
@@ -26,28 +21,26 @@ public class UserView {
     private String firstName;
     @JsonProperty
     private String lastName;
+    @JsonIgnore
+    private String password;
+    @JsonProperty
+    private String email;
 
-
-    private static final AtomicLong ID_GENERATOR = new AtomicLong(0);
-
+    @SuppressWarnings("unused")
     @JsonCreator
-    public UserView(@JsonProperty("firstName") String firstName,
-                    @JsonProperty("lastName") String lastName,
-                    @JsonProperty("email") String email,
-                    @JsonProperty("login") String login){
-        this.id = ID_GENERATOR.getAndIncrement();
+    public User(@JsonProperty(value = "id") Long id,
+                @JsonProperty("firstName") String firstName,
+                @JsonProperty("lastName") String lastName,
+                @JsonProperty("email") String email,
+                @JsonProperty("login") String login,
+                @JsonProperty("password") String password){
+        this.id = id;
         this.login = login;
         this.firstName = firstName;
         this.lastName = lastName;
+        this.password  = password;
+        this.email = email;
     }
-    UserView(User user){
-        this.id = user.getId();
-        this.login = user.getLogin();
-        this.firstName = user.getFirstName();
-        this.lastName = user.getLastName();
-    }
-
-    public UserView(){}
 
     public void setLogin(String login){
         this.login = login;
@@ -61,12 +54,24 @@ public class UserView {
         this.lastName = lastName;
     }
 
+    public void setPassword(String password){
+        this.password = password;
+    }
+
+    public void setEmail(String email){
+        this.email = email;
+    }
+
     public String getLogin(){
         return login;
     }
 
     public Long getId(){
         return id;
+    }
+
+    public void setId(Long id){
+        this.id = id;
     }
 
     public String getFirstName(){
@@ -77,8 +82,15 @@ public class UserView {
         return lastName;
     }
 
-    public String getAsJSON() throws JsonGenerationException, JsonMappingException, IOException {
-        ObjectMapper mapper = new ObjectMapper();
-        return mapper.writeValueAsString(this) ;
+    public String getPassword(){
+        return password;
+    }
+
+    public String getEmail(){
+        return email;
+    }
+
+    public UserView toView(){
+        return new UserView(this);
     }
 }

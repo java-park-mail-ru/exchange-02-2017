@@ -1,12 +1,13 @@
-package sample.services;
+package com.cyclic.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import sample.models.User;
+import com.cyclic.models.User;
 
 import java.util.List;
 
@@ -26,14 +27,18 @@ public class AccountServiceDB implements AccountService {
         this.template = template;
     }
 
-    public void addUser(User newUser) {
+    public int addUser(User newUser) {
         String query = new StringBuilder()
                 .append("INSERT INTO users (login, email, password, firstName, lastName) ")
                 .append("VALUES(?,?,?,?,?) ;")
                 .toString();
-
-        template.update(query, newUser.getLogin(), newUser.getEmail(),
-                newUser.getPassword(), newUser.getFirstName(), newUser.getLastName());
+        try {
+            template.update(query, newUser.getLogin(), newUser.getEmail(),
+                    newUser.getPassword(), newUser.getFirstName(), newUser.getLastName());
+        } catch (DuplicateKeyException e){
+            return ERROR_DUPLICATE;
+        }
+        return OK;
     }
 
     public Boolean hasUser(String login) {
@@ -83,14 +88,20 @@ public class AccountServiceDB implements AccountService {
         }
     }
 
-    public void setUser(User updatedUser) {
+    public int setUser(User updatedUser) {
         String query = new StringBuilder()
                 .append("UPDATE users SET (login, email, password, firstName, lastName) ")
                 .append("VALUES (?,?,?,?,?) ;")
                 .toString();
-
-        template.update(query, updatedUser.getLogin(), updatedUser.getEmail(),
+        try {
+            template.update(query, updatedUser.getLogin(), updatedUser.getEmail(),
                 updatedUser.getPassword(), updatedUser.getFirstName(), updatedUser.getLastName());
+        } catch (DuplicateKeyException e){
+            return ERROR_DUPLICATE;
+        } catch (DataAccessException e){
+            return ERROR_UNDEFINED;
+        }
+        return OK;
     }
 
     public List<User> getUsers() {

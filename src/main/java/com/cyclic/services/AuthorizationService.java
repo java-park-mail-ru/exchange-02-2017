@@ -1,4 +1,4 @@
-package sample.services;
+package com.cyclic.services;
 
 import org.springframework.stereotype.Service;
 

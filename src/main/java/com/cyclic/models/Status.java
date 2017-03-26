@@ -1,4 +1,4 @@
-package sample.models;
+package com.cyclic.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

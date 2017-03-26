@@ -1,16 +1,15 @@
-package sample.controllers;
+package com.cyclic.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
-import sample.models.Status;
-import sample.services.AccountService;
-import sample.models.User;
-import sample.services.AccountServiceDB;
-import sample.services.AccountServiceMap;
-import sample.services.AuthorizationService;
+import com.cyclic.models.Status;
+import com.cyclic.services.AccountService;
+import com.cyclic.models.User;
+import com.cyclic.services.AccountServiceDB;
+import com.cyclic.services.AuthorizationService;
 
 import javax.servlet.http.HttpSession;
 
