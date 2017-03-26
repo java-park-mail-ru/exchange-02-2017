@@ -86,7 +86,6 @@ public class UserController {
         if(httpSession.getAttribute("userId") == null){
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new Status("user not authorized"));
         }
-
         if(accountService.getUserById(userId) == null)
             return ResponseEntity.badRequest().body(new Status("user not exist"));
 
