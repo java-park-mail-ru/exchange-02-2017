@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 import com.cyclic.models.User;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -21,15 +22,6 @@ public class AccountServiceMap implements AccountService {
         newUser.setId(ID_GENERATOR.getAndIncrement());
         users.put(newUser.getId(), newUser);
         return OK;
-    }
-
-    public Boolean hasUser(String login){
-        for (ConcurrentHashMap.Entry<Long, User> pair : users.entrySet()) {
-            if(pair.getValue().getLogin().equals(login)){
-                return true;
-            }
-        }
-        return false;
     }
 
     public User getUserById(Long id){
@@ -60,7 +52,8 @@ public class AccountServiceMap implements AccountService {
         return OK;
     }
 
-    public ArrayList<User> getUsers(){
-        return new ArrayList<>(users.values());
+    public List<User> getUsers(int offset, int limit){
+        ArrayList<User> result = new ArrayList<>(users.values());
+        return result.subList(offset, Integer.min(offset+limit, result.size())-1);
     }
 }

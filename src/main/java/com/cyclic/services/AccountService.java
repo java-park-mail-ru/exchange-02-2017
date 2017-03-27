@@ -18,10 +18,9 @@ public interface AccountService {
     int ERROR_DUPLICATE = 1;
     int ERROR_UNDEFINED = 5;
     int addUser(User newUser);
-    Boolean hasUser(String login);
     User getUserById(Long id);
     User getUserByLogin(String login);
     User getUserByEmail(String email);
     int setUser(User updatedUser);
-    List<User> getUsers();
+    List<User> getUsers(int offset, int limit);
 }

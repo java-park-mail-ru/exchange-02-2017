@@ -9,7 +9,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.cyclic.models.User;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by algys on 24.03.17.
@@ -39,14 +41,6 @@ public class AccountServiceDB implements AccountService {
             return ERROR_DUPLICATE;
         }
         return OK;
-    }
-
-    public Boolean hasUser(String login) {
-        String query = new StringBuilder()
-                .append("SELECT COUNT(*) FROM users WHERE login = ? ;")
-                .toString();
-
-        return template.queryForObject(query, Integer.class, login) == 1;
     }
 
     public User getUserById(Long id) {
@@ -90,12 +84,12 @@ public class AccountServiceDB implements AccountService {
 
     public int setUser(User updatedUser) {
         String query = new StringBuilder()
-                .append("UPDATE users SET (login, email, password, firstName, lastName) ")
-                .append("VALUES (?,?,?,?,?) ;")
+                .append("UPDATE users SET login = ?, email = ?, password = ?, firstName = ?, lastName = ? ")
+                .append("WHERE id = ? ;")
                 .toString();
         try {
             template.update(query, updatedUser.getLogin(), updatedUser.getEmail(),
-                updatedUser.getPassword(), updatedUser.getFirstName(), updatedUser.getLastName());
+                updatedUser.getPassword(), updatedUser.getFirstName(), updatedUser.getLastName(), updatedUser.getId());
         } catch (DuplicateKeyException e){
             return ERROR_DUPLICATE;
         } catch (DataAccessException e){
@@ -104,8 +98,37 @@ public class AccountServiceDB implements AccountService {
         return OK;
     }
 
-    public List<User> getUsers() {
-        return null;
+    public List<User> getUsers(int offset, int limit) {
+        String query = new StringBuilder()
+                .append("SELECT * FROM users ")
+                .append("ORDER BY id ")
+                .append("LIMIT ? ")
+                .append("OFFSET ? ;")
+                .toString();
+
+        List<Map<String, Object>> rows;
+        try {
+            rows = template.queryForList(query, limit, offset);
+        } catch (DataAccessException e){
+            return null;
+        }
+        List<User> users = new ArrayList<>();
+
+        for (Map<String, Object> row : rows) {
+            String firstName = null;
+            if(row.get("firstName")!=null)
+                firstName = row.get("firstName").toString();
+            String lastName = null;
+            if(row.get("lsstName")!=null)
+                lastName = row.get("lastName").toString();
+            users.add(new User(
+                            Long.parseLong(row.get("id").toString()), firstName,
+                            lastName, row.get("email").toString(),
+                            row.get("login").toString(), row.get("password").toString()
+                    )
+            );
+        }
+        return users;
     }
 
     private final RowMapper<User> userMapper = (rs, num) -> {
