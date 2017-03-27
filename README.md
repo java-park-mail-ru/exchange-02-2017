@@ -1,4 +1,5 @@
 # exchange-02-2017
+[![Build Status](https://travis-ci.org/algys/exchange-02-2017.svg?branch=dev)](https://travis-ci.org/algys/exchange-02-2017)
 
 #Описание Игры
 Суть игры построить наиболее многочисленную популяцию.
