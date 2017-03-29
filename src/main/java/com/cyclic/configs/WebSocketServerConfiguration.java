@@ -11,6 +11,7 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 import com.cyclic.controllers.GamePlayerWebSocketHandler;
 import com.cyclic.services.ConnectedSessionsService;
 
+@SuppressWarnings("SpringJavaAutowiringInspection")
 @Configuration
 @EnableWebSocket
 @ComponentScan

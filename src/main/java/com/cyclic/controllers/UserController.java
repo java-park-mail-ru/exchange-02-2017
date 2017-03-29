@@ -51,7 +51,7 @@ public class UserController {
         }
         login = login.trim();
 
-        if(password == null){
+        if(password == null || password.length() == 0){
             return ResponseEntity.badRequest().body(new Status("invalid password"));
         }
         if(email == null || !Validator.email(email)){
@@ -76,7 +76,7 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new Status("user not authorized"));
         }
 
-        return ResponseEntity.ok(accountService.getUserById((Long) httpSession.getAttribute("userId")).toView());
+        return ResponseEntity.ok(accountService.getUserById((Long) httpSession.getAttribute("userId")));
     }
 
     @RequestMapping(path = "/{userId}", method = RequestMethod.GET, produces = "application/json")
@@ -97,7 +97,7 @@ public class UserController {
     public ResponseEntity changeUser(@RequestBody User body, HttpSession httpSession){
 
         if(httpSession.getAttribute("userId") == null){
-            return ResponseEntity.badRequest().body(new Status("user not authorized"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new Status("user not authorized"));
         }
         Long userId = (Long) httpSession.getAttribute("userId");
         User user = accountService.getUserById(userId);
@@ -126,7 +126,7 @@ public class UserController {
         if(body.getLastName() != null) {
             user.setLastName(body.getLastName());
         }
-        if(body.getPassword() != null) {
+        if(body.getPassword() != null && body.getPassword().length()>0) {
             user.setPassword(passwordEncoder.encode(body.getPassword()));
         }
 
