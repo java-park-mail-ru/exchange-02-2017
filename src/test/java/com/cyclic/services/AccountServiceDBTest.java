@@ -21,6 +21,7 @@ import static org.junit.Assert.*;
  * Created by algys on 26.03.17.
  */
 
+@SuppressWarnings("DefaultFileTemplate")
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @RunWith(SpringRunner.class)
 @AutoConfigureTestDatabase(connection = EmbeddedDatabaseConnection.H2)
