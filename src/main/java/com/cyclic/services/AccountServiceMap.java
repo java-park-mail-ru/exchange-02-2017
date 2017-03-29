@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * Created by algys on 24.03.17.
  */
 
+@SuppressWarnings({"unused", "DefaultFileTemplate"})
 @Service
 public class AccountServiceMap implements AccountService {
     private final ConcurrentHashMap<Long, User> users = new ConcurrentHashMap<>();

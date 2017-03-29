@@ -8,7 +8,7 @@ import java.util.Vector;
 @SuppressWarnings({"unused", "DefaultFileTemplate"})
 @Service
 public class ConnectedSessionsService {
-    private Vector<WebSocketSession> webSocketSessions = new Vector<>();
+    private final Vector<WebSocketSession> webSocketSessions = new Vector<>();
 
     public void addClient(WebSocketSession session) {
         webSocketSessions.add(session);

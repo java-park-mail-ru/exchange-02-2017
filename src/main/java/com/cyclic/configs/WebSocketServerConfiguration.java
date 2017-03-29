@@ -11,13 +11,13 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 import com.cyclic.controllers.GamePlayerWebSocketHandler;
 import com.cyclic.services.ConnectedSessionsService;
 
-@SuppressWarnings("SpringJavaAutowiringInspection")
+@SuppressWarnings({"SpringJavaAutowiringInspection", "SpringFacetCodeInspection"})
 @Configuration
 @EnableWebSocket
 @ComponentScan
-public class WebSocketServerConfiguration implements WebSocketConfigurer {
+class WebSocketServerConfiguration implements WebSocketConfigurer {
 
-    private ConnectedSessionsService connectedSessionsService;
+    private final ConnectedSessionsService connectedSessionsService;
 
     @Autowired
     public WebSocketServerConfiguration(ConnectedSessionsService connectedSessionsService){

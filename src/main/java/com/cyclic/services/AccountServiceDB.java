@@ -18,6 +18,7 @@ import java.util.Map;
  */
 
 
+@SuppressWarnings({"DefaultFileTemplate", "StringBufferReplaceableByString"})
 @Service
 @Transactional
 public class AccountServiceDB implements AccountService {
@@ -119,7 +120,7 @@ public class AccountServiceDB implements AccountService {
             if(row.get("firstName")!=null)
                 firstName = row.get("firstName").toString();
             String lastName = null;
-            if(row.get("lsstName")!=null)
+            if(row.get("lastName")!=null)
                 lastName = row.get("lastName").toString();
             users.add(new User(
                             Long.parseLong(row.get("id").toString()), firstName,

@@ -1,6 +1,5 @@
 package com.cyclic.services;
 
-import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import com.cyclic.models.User;
 

@@ -9,7 +9,7 @@ import com.cyclic.services.ConnectedSessionsService;
 
 public class GamePlayerWebSocketHandler extends TextWebSocketHandler {
 
-    private ConnectedSessionsService connectedSessionsService;
+    private final ConnectedSessionsService connectedSessionsService;
 
     public GamePlayerWebSocketHandler(ConnectedSessionsService connectedSessionsService){
         this.connectedSessionsService = connectedSessionsService;
