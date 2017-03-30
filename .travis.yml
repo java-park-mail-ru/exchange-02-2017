@@ -1,0 +1,20 @@
+language: java
+jdk:
+  - oraclejdk8
+
+branches:
+  only:
+  - dev
+
+deploy:
+  provider: heroku
+  api_key:
+    secure: 225b737b-a168-418d-9c5c-e02ad869c301
+  app: cyclic-server
+  on:
+    repo: algys/exchange-02-2017
+    branch: dev
+  skip_cleanup: true
+
+install:
+  - mvn clean install

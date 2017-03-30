@@ -1,0 +1,189 @@
+swagger: '2.0'
+info:
+  description: |
+    This is a server for the Cyclic Game.
+  version: "0.1.0"
+  title: Cyclic Game Server Api
+
+paths:
+  /user:
+    put:
+      tags:
+      - user
+      summary: Регистрация пользователя
+      description: Регистрация нового пользователя
+      operationId: createUser
+      produces:
+      - application/json
+      parameters:
+      - in: body
+        name: User
+        description: User object
+        required: true
+        schema:
+          $ref: '#/definitions/User'
+      responses:
+        200:
+          description: Успешная Регистрация
+          schema:
+            $ref: '#/definitions/ApiResponse'
+        400:
+          description: Неправильные данные
+          schema:
+            $ref: '#/definitions/ApiResponse'
+    post:
+      tags:
+      - user
+      summary: Изменение данных
+      description: Изменение данных пользователя
+      operationId: changeUser
+      produces:
+      - application/json
+      parameters:
+      - in: body
+        name: User
+        description: User object
+        required: true
+        schema:
+            $ref: '#/definitions/User'
+      responses:
+        200:
+          description: Успешное изменение
+          schema:
+            $ref: '#/definitions/ApiResponse'
+        400:
+          description: Неправильные данные
+          schema:
+            $ref: '#/definitions/ApiResponse'
+        401:
+          description: Пользователь не авторизован
+          schema:
+            $ref: '#/definitions/ApiResponse'
+    get:
+      tags:
+      - user
+      summary: Получение данных
+      description: Получение данных пользователя
+      operationId: getUser
+      produces:
+      - application/json
+      responses:
+        200:
+          description: Успешное получение
+          schema:
+            $ref: '#/definitions/User'
+        401:
+          description: Пользователь не авторизован
+          schema:
+            $ref: '#/definitions/ApiResponse'
+
+  /user/{id}:
+   get:
+      tags:
+      - user
+      summary: Получение данных
+      description: Получение данных пользователя по id
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: id
+        description: User id
+        required: true
+        type: integer
+        format: int64
+      responses:
+        200:
+          description: Успешное получение
+          schema:
+            $ref: '#/definitions/UserView'
+        401:
+          description: Пользователь не авторизован
+          schema:
+            $ref: '#/definitions/ApiResponse'
+
+  /login:
+    post:
+      tags:
+      - user
+      summary: Вход в систему
+      produces:
+      - application/json
+      parameters:
+      - name: User
+        in: body
+        description: Данные пользователя(обязательные поля login и password)
+        required: true
+        schema:
+            $ref: '#/definitions/User'
+      responses:
+        200:
+          description: Успешный вход
+          schema:
+            $ref: '#/definitions/ApiResponse'
+        400:
+          description: Неправильные данные
+          schema:
+            $ref: '#/definitions/ApiResponse'
+
+    delete:
+      tags:
+      - user
+      summary: Выход из системы
+      description: Выход из системы
+      produces:
+      - application/json
+      parameters: []
+      responses:
+        200:
+          description: Успешный выход
+          schema:
+            $ref: '#/definitions/ApiResponse'
+
+definitions:
+  User:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+        readOnly: true
+      login:
+        type: string
+      firstName:
+        type: string
+      lastName:
+        type: string
+      email:
+        type: string
+      password:
+        type: string
+
+
+  UserView:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+        readOnly: true
+      login:
+        type: string
+      firstName:
+        type: string
+      lastName:
+        type: string
+
+
+  ApiResponse:
+    type: object
+    properties:
+      status:
+        type: string
+
+schemes:
+ - https
+ - http
+# Added by API Auto Mocking Plugin
+host: cyclic-server-api-test.herokuapp.com
+basePath: /api
