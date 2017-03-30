@@ -22,7 +22,7 @@ import java.io.IOException;
 @SuppressWarnings({"WeakerAccess", "DefaultFileTemplate"})
 @RestController
 @CrossOrigin(
-        methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE},
+        methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE, RequestMethod.OPTIONS},
         maxAge = 3600,
         allowedHeaders = {"Content-Type", "Origin", "X-Requested-With", "Accept"},
         allowCredentials = "true",
