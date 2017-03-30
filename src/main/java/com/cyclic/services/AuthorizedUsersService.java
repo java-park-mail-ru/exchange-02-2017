@@ -11,7 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @SuppressWarnings("DefaultFileTemplate")
 @Service
-public class AuthorizationService {
+public class AuthorizedUsersService {
     private final ConcurrentHashMap<HttpSession, Long> authorizedUsers = new ConcurrentHashMap<>();
 
     public void add(HttpSession httpSession, Long userId){

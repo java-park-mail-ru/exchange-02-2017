@@ -9,7 +9,7 @@ import com.cyclic.models.Status;
 import com.cyclic.services.AccountService;
 import com.cyclic.models.User;
 import com.cyclic.services.AccountServiceDB;
-import com.cyclic.services.AuthorizationService;
+import com.cyclic.services.AuthorizedUsersService;
 
 import javax.servlet.http.HttpSession;
 
@@ -31,11 +31,11 @@ import javax.servlet.http.HttpSession;
 public class AuthController {
 
     private final AccountService accountService;
-    private final AuthorizationService authorizationService;
+    private final AuthorizedUsersService authorizationService;
     private final PasswordEncoder passwordEncoder;
 
     @Autowired
-    public AuthController(AccountServiceDB accountService, AuthorizationService authorizationService,
+    public AuthController(AccountServiceDB accountService, AuthorizedUsersService authorizationService,
                           PasswordEncoder passwordEncoder){
         this.accountService = accountService;
         this.authorizationService = authorizationService;
