@@ -1,37 +1,28 @@
 package com.cyclic.configs;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
+import com.cyclic.controllers.WebSocketController;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.server.ServerHttpRequest;
+import org.springframework.http.server.ServerHttpResponse;
+import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
-import com.cyclic.controllers.GamePlayerWebSocketHandler;
-import com.cyclic.services.ConnectedSessionsService;
+import org.springframework.web.socket.server.HandshakeInterceptor;
 
-@SuppressWarnings({"SpringJavaAutowiringInspection", "SpringFacetCodeInspection"})
+import javax.servlet.http.HttpSession;
+import java.util.Map;
+
+
 @Configuration
 @EnableWebSocket
-@ComponentScan
-class WebSocketServerConfiguration implements WebSocketConfigurer {
-
-    private final ConnectedSessionsService connectedSessionsService;
-
-    @Autowired
-    public WebSocketServerConfiguration(ConnectedSessionsService connectedSessionsService){
-        this.connectedSessionsService = connectedSessionsService;
-    }
-
-    @Bean
-    public WebSocketHandler myWebSocketHandler() {
-        return new GamePlayerWebSocketHandler(connectedSessionsService);
-    }
-
+public class WebSocketServerConfiguration implements WebSocketConfigurer {
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(myWebSocketHandler(), "/game").setAllowedOrigins("*");
+        registry.addHandler(new WebSocketController(), "/game")
+                .setAllowedOrigins("*");
     }
+
 }

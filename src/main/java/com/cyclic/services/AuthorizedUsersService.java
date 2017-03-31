@@ -16,6 +16,7 @@ public class AuthorizedUsersService {
 
     public void add(HttpSession httpSession, Long userId){
         authorizedUsers.put(httpSession, userId);
+
     }
 
     public void remove(HttpSession httpSession){
@@ -26,4 +27,5 @@ public class AuthorizedUsersService {
     public boolean isLogged(HttpSession httpSession){
         return authorizedUsers.containsKey(httpSession);
     }
+
 }
