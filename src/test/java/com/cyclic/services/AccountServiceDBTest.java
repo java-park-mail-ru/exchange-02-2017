@@ -23,7 +23,7 @@ import static org.junit.Assert.*;
  */
 
 @SuppressWarnings("DefaultFileTemplate")
-@SpringBootTest(webEnvironment = NONE)
+@SpringBootTest(webEnvironment = RANDOM_PORT)
 @RunWith(SpringRunner.class)
 @AutoConfigureTestDatabase(connection = EmbeddedDatabaseConnection.H2)
 @Transactional
