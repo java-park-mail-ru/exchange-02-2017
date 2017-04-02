@@ -1,7 +1,7 @@
 swagger: '2.0'
 info:
   description: |
-    This is a server for the Cyclic Game.
+    This is ac server for the Cyclic Game.
   version: "0.1.0"
   title: Cyclic Game Server Api
 

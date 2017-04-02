@@ -1,7 +1,10 @@
 package com.cyclic.controllers;
 
-import com.cyclic.services.AuthorizedUsersService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.cyclic.LOG;
+import com.cyclic.models.WebSocketAnswer;
+import com.cyclic.services.game.RoomManager;
+import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -10,11 +13,7 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 public class WebSocketController extends TextWebSocketHandler {
 
-    @Autowired
-    private AuthorizedUsersService authorizationService;
-
-    public WebSocketController(){
-    }
+    private RoomManager roomManager = new RoomManager();
 
     @Override
     public void handleTransportError(WebSocketSession session, Throwable throwable) throws Exception {
@@ -34,7 +33,19 @@ public class WebSocketController extends TextWebSocketHandler {
 
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage jsonTextMessage) throws Exception {
-
+        String message = jsonTextMessage.getPayload();
+        WebSocketAnswer webSocketAnswer = null;
+        try {
+             webSocketAnswer = new Gson().fromJson( message, WebSocketAnswer.class);
+        }
+        catch (JsonSyntaxException e) {
+            LOG.error(e);
+        }
+        if (webSocketAnswer != null) {
+            if (webSocketAnswer.getActionCode() == WebSocketAnswer.READY_FOR_GAME) {
+                roomManager.findRoomForThisGuy(session);
+            }
+        }
     }
 
 
