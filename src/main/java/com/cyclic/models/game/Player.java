@@ -1,18 +1,22 @@
 package com.cyclic.models.game;
 
+import org.springframework.web.socket.TextMessage;
+import org.springframework.web.socket.WebSocketSession;
+
+import java.io.IOException;
+
 /**
  * Created by serych on 01.04.17.
  */
 public class Player {
-    String nickname;
-    long id;
-    long totalScore;
-    long roomID;
+    private String nickname = "";
+    private long id = 0;
+    private long totalScore = 0;
+    private long roomID = 0;
+    private transient WebSocketSession webSocketSession;
 
-    public Player(String nickname, long id, long totalScore) {
-        this.nickname = nickname;
-        this.id = id;
-        this.totalScore = totalScore;
+    public Player(WebSocketSession webSocketSession) {
+        this.webSocketSession = webSocketSession;
     }
 
     public String getNickname() {
@@ -45,5 +49,13 @@ public class Player {
 
     public void setRoomID(long roomID) {
         this.roomID = roomID;
+    }
+
+    public void send(String data) {
+        try {
+            webSocketSession.sendMessage(new TextMessage(data));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

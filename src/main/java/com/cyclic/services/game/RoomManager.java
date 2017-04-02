@@ -17,7 +17,7 @@ public class RoomManager {
             if (room.addSession(session))
                 return;
         }
-        Room newRoom = new Room();
+        Room newRoom = new Room(rooms.size());
         newRoom.addSession(session);
         rooms.add(newRoom);
     }
