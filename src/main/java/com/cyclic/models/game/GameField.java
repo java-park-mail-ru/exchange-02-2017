@@ -1,7 +1,7 @@
 package com.cyclic.models.game;
 
-import java.util.Random;
-import java.util.Vector;
+import com.cyclic.models.game.moves.CreateMove;
+
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -11,7 +11,7 @@ public class GameField {
     private transient int height, width;
     private transient Node[][] world;
     private transient Room room;
-    private int performingId;
+    private transient Moves possibleMoves;
 
     public GameField(Room room, int height, int width) {
         this.room = room;
@@ -23,7 +23,7 @@ public class GameField {
         }
         this.height = height;
         this.width  = width;
-        this.performingId = ThreadLocalRandom.current().nextInt(0, Room.PLAYERS_COUNT);
+
     }
 
     public Node getByPosition(int x, int y) {
@@ -49,7 +49,30 @@ public class GameField {
         room = null;
     }
 
-    public int getPerformingId() {
-        return performingId;
+    public Moves getPossibleMoves() {
+        return possibleMoves;
+    }
+
+    public void setPossibleMoves(Moves possibleMoves) {
+        this.possibleMoves = possibleMoves;
+    }
+
+    public boolean acceptMove() {
+        for (CreateMove createMove : possibleMoves.getCreateMoves()) {
+            Node n1 = world[createMove.getXfrom()][createMove.getYfrom()];
+            Node n2 = world[createMove.getXto()][createMove.getYto()];
+            if (n1 != null && n1.getPlayerID() == room.getPerformingId() && n2 == null) {
+                world[createMove.getXto()][createMove.getYto()] = new Node(
+                        n1,
+                        room.getPerformingId(),
+                        createMove.getType(),
+                        createMove.getXto(),
+                        createMove.getYto());
+            }
+            else {
+                return false;
+            }
+        }
+        return true;
     }
 }

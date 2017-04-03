@@ -5,6 +5,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import java.util.Vector;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Created by serych on 31.03.17.
@@ -20,13 +21,16 @@ public class Room {
 
     private Vector<Player> players;
     private transient GameField field;
+    private int performingId;
     private int status;
     private long roomID;
+    private Gson gson;
 
     public Room(long roomID) {
         status = STATUS_CREATING;
         players = new Vector<>(4);
         field = null;
+        gson = new GsonBuilder().create();
         this.roomID = roomID;
     }
 
@@ -74,6 +78,7 @@ public class Room {
                 }
             }
             status = STATUS_PLAYING;
+            performingId = ThreadLocalRandom.current().nextInt(0, Room.PLAYERS_COUNT);
             field = new GameField(this, FIELD_HEIGHT, FIELD_WIDTH);
             broadcastRoomUpdate();
             return true;
@@ -100,13 +105,31 @@ public class Room {
         return false;
     }
 
-    public void handlePlayersMove(Player player, Vector<Move> moves) {
-        if (field.getPerformingId() == player.getId()) {
-            Gson gson = new GsonBuilder().create();
-            broadcast(gson.toJson(new PlayerMoveAnswer(player.getId(), moves)));
+    public void handlePlayersMove(Player player, Moves moves) {
+        if (status == STATUS_PLAYING && field != null && performingId == player.getId()) {
+            field.setPossibleMoves(moves);
+            broadcast(gson.toJson(new PlayerMoveAnswer(player.getId(), PlayerMoveAnswer.ANSWER_MOVE_TEMP, moves)));
         }
         else {
             player.disconnectBadApi();
         }
+    }
+
+    public void acceptMove(Player player) {
+        if (status == STATUS_PLAYING && field != null && performingId == player.getId()) {
+            if (!field.acceptMove())
+                player.disconnectBadApi();
+            broadcast(gson.toJson(new PlayerMoveAnswer(player.getId(), PlayerMoveAnswer.ANSWER_MOVE_NORM, field.getPossibleMoves())));
+            performingId += 1;
+            performingId %= PLAYERS_COUNT;
+            broadcastRoomUpdate();
+        }
+        else {
+            player.disconnectBadApi();
+        }
+    }
+
+    public int getPerformingId() {
+        return performingId;
     }
 }

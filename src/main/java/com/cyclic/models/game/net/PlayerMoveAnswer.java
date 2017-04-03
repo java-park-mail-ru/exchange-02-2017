@@ -1,6 +1,6 @@
 package com.cyclic.models.game.net;
 
-import com.cyclic.models.game.Move;
+import com.cyclic.models.game.Moves;
 
 import java.util.Vector;
 
@@ -8,11 +8,16 @@ import java.util.Vector;
  * Created by serych on 03.04.17.
  */
 public class PlayerMoveAnswer {
-    private long playerid;
-    private Vector<Move> moves;
+    public static final int ANSWER_MOVE_TEMP = 0;
+    public static final int ANSWER_MOVE_NORM = 1;
 
-    public PlayerMoveAnswer(long playerid, Vector<Move> moves) {
+    private long playerid;
+    private long type;
+    private Moves moves;
+
+    public PlayerMoveAnswer(long playerid, long type, Moves moves) {
         this.playerid = playerid;
+        this.type = type;
         this.moves = moves;
     }
 }

@@ -28,6 +28,7 @@ public class PlayerManager {
             if (player.getWebSocketSession() == session) {
                 player.delete();
                 players.remove(player);
+                return;
             }
         }
     }

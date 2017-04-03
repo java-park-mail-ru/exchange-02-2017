@@ -20,7 +20,7 @@ public class WebSocketController extends TextWebSocketHandler {
 
     @Override
     public void handleTransportError(WebSocketSession session, Throwable throwable) throws Exception {
-        System.out.println("error occured at sender " + session);
+        System.out.println("errorConsole occured at sender " + session);
     }
 
     @Override
@@ -48,6 +48,8 @@ public class WebSocketController extends TextWebSocketHandler {
         }
         if (webSocketAnswer != null) {
             Player player = playerManager.getPlayerForSession(session);
+            if (webSocketAnswer.getActionCode() == null)
+                player.disconnectBadApi();
             switch (webSocketAnswer.getActionCode()) {
                 case WebSocketAnswer.READY_FOR_ROOM_SEARCH:
                     roomManager.findRoomForThisGuy(player);
@@ -55,12 +57,18 @@ public class WebSocketController extends TextWebSocketHandler {
                 case WebSocketAnswer.READY_FOR_GAME_START:
                     player.setReadyForGameStart(true);
                     break;
-                case WebSocketAnswer.GAME_MOVE:
+                case WebSocketAnswer.GAME_UPDATE_MY_MOVE:
                     player.getRoom().handlePlayersMove(player, webSocketAnswer.getMoves());
+                    break;
+                case WebSocketAnswer.GAME_ACCEPT_MY_MOVE:
+                    player.getRoom().acceptMove(player);
                     break;
                 default:
                     player.disconnectBadApi();
             }
+        }
+        else {
+            session.close();
         }
     }
 
