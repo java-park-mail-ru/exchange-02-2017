@@ -1,5 +1,6 @@
 package com.cyclic.services.game;
 
+import com.cyclic.models.game.Player;
 import com.cyclic.models.game.Room;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -12,13 +13,20 @@ import java.util.Vector;
 public class RoomManager {
     Vector<Room> rooms = new Vector<>();
 
-    public void findRoomForThisGuy(WebSocketSession session) {
+    public void findRoomForThisGuy(Player player) {
         for (Room room:rooms) {
-            if (room.addSession(session))
+            if (room.addPlayer(player))
                 return;
         }
         Room newRoom = new Room(rooms.size());
-        newRoom.addSession(session);
+        newRoom.addPlayer(player);
         rooms.add(newRoom);
+    }
+
+    public void deletePlayerFromAnyRoom(Player player) {
+        for (Room room:rooms) {
+            if (room.deletePlayer(player))
+                return;
+        }
     }
 }
