@@ -12,11 +12,11 @@ public class WebSocketAnswer {
     /**
      * ActionCode
      */
-    private Integer ac = null;
+    private Integer action = null;
     private Moves moves = null;
 
-    public WebSocketAnswer(int ac) {
-        this.ac = ac;
+    public WebSocketAnswer(int action) {
+        this.action = action;
     }
 
     public Moves getMoves() {
@@ -24,6 +24,6 @@ public class WebSocketAnswer {
     }
 
     public Integer getActionCode() {
-        return ac;
+        return action;
     }
 }

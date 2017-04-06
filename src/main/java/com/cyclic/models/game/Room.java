@@ -1,11 +1,14 @@
 package com.cyclic.models.game;
 
-import com.cyclic.models.game.net.PlayerMoveAnswer;
+import com.cyclic.models.game.net.PlayerMoveBroadcast;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import java.util.Random;
 import java.util.Vector;
 import java.util.concurrent.ThreadLocalRandom;
+
+import static com.cyclic.controllers.WebSocketController.DATATYPE_ROOMINFO;
 
 /**
  * Created by serych on 31.03.17.
@@ -16,15 +19,19 @@ public class Room {
     public static final int STATUS_READY = 2;
 
     public static final int PLAYERS_COUNT = 2;
-    public static final int FIELD_WIDTH  = 1000;
-    public static final int FIELD_HEIGHT = 1000;
+    public static final int START_BONUS_COUNT = 10;
+    public static final int BONUS_MIN_VALUE = 10;
+    public static final int BONUS_MAX_VALUE = 1000;
+    public static final int FIELD_WIDTH  = 20;
+    public static final int FIELD_HEIGHT = 20;
 
+    private final int datatype = DATATYPE_ROOMINFO;
     private Vector<Player> players;
     private transient GameField field;
     private int performingId;
     private int status;
     private long roomID;
-    private Gson gson;
+    private transient Gson gson;
 
     public Room(long roomID) {
         status = STATUS_CREATING;
@@ -34,7 +41,7 @@ public class Room {
         this.roomID = roomID;
     }
 
-    public int getSessionsCount() {
+    public int getPlayersCount() {
         return players.size();
     }
 
@@ -42,10 +49,15 @@ public class Room {
         return players.isEmpty();
     }
 
+    public boolean isFull() {
+        return players.size() == PLAYERS_COUNT;
+    }
+
     public boolean addPlayer(Player player) {
         if (status != STATUS_CREATING)
             return false;
-        player.setNickname("Nick");
+        // TODO: Link webSocket session and HTTP session and give normal nickname
+        player.setNickname("Nick" + ThreadLocalRandom.current().nextInt(0, 999999 + 1));
         player.setId(players.size());
         player.setRoom(this);
         players.add(player);
@@ -56,16 +68,20 @@ public class Room {
         return true;
     }
 
+    public void removePlayer(Player player) {
+        if (players.remove(player))
+            stop();
+    }
+
     private void broadcastRoomUpdate() {
         for (Player player: players) {
-            Gson gson = new GsonBuilder().create();
-            player.send(gson.toJson(this));
+            player.sendString(gson.toJson(this));
         }
     }
 
     public void broadcast(String data) {
         for (Player player: players) {
-            player.send(data);
+            player.sendString(data);
         }
     }
 
@@ -79,8 +95,11 @@ public class Room {
             }
             status = STATUS_PLAYING;
             performingId = ThreadLocalRandom.current().nextInt(0, Room.PLAYERS_COUNT);
-            field = new GameField(this, FIELD_HEIGHT, FIELD_WIDTH);
             broadcastRoomUpdate();
+            field = new GameField(this, FIELD_HEIGHT, FIELD_WIDTH);
+            for (int i = 0; i < START_BONUS_COUNT; i++) {
+                field.addRandomBonus();
+            }
             return true;
         }
         broadcastRoomUpdate();
@@ -91,24 +110,10 @@ public class Room {
         return status;
     }
 
-    public boolean deletePlayer(Player player) {
-        for (Player p: players) {
-            if (p == player) {
-                players.remove(player);
-                field.stopGame();
-                field = null;
-                status = STATUS_CREATING;
-                broadcastRoomUpdate();
-                return true;
-            }
-        }
-        return false;
-    }
-
     public void handlePlayersMove(Player player, Moves moves) {
         if (status == STATUS_PLAYING && field != null && performingId == player.getId()) {
             field.setPossibleMoves(moves);
-            broadcast(gson.toJson(new PlayerMoveAnswer(player.getId(), PlayerMoveAnswer.ANSWER_MOVE_TEMP, moves)));
+            broadcast(gson.toJson(new PlayerMoveBroadcast(player.getId(), PlayerMoveBroadcast.ANSWER_MOVE_TEMP, moves)));
         }
         else {
             player.disconnectBadApi();
@@ -119,7 +124,7 @@ public class Room {
         if (status == STATUS_PLAYING && field != null && performingId == player.getId()) {
             if (!field.acceptMove())
                 player.disconnectBadApi();
-            broadcast(gson.toJson(new PlayerMoveAnswer(player.getId(), PlayerMoveAnswer.ANSWER_MOVE_NORM, field.getPossibleMoves())));
+            broadcast(gson.toJson(new PlayerMoveBroadcast(player.getId(), PlayerMoveBroadcast.ANSWER_MOVE_NORM, field.getPossibleMoves())));
             performingId += 1;
             performingId %= PLAYERS_COUNT;
             broadcastRoomUpdate();
@@ -131,5 +136,15 @@ public class Room {
 
     public int getPerformingId() {
         return performingId;
+    }
+
+    public Gson getGson() {
+        return gson;
+    }
+
+    public void stop() {
+        status = STATUS_CREATING;
+        field = null;
+        broadcastRoomUpdate();
     }
 }

@@ -6,15 +6,21 @@ import java.util.Vector;
  * Created by serych on 03.04.17.
  */
 public class Node {
+
+    public static final int NODE_TOWER = 0;
+    public static final int NODE_BONUS = 0;
+
     private Node parentNode;
     private Vector<Node> nextNodes;
     private int playerID;
+    private int value;
     private int type;
     private int x;
     private int y;
 
-    public Node(Node parentNode, int playerID, int type, int x, int y) {
+    public Node(Node parentNode, int playerID, int value, int type, int x, int y) {
         this.parentNode = parentNode;
+        this.value = value;
         this.nextNodes = new Vector<>();
         this.playerID = playerID;
         this.type = type;
@@ -72,5 +78,13 @@ public class Node {
 
     public void setY(int y) {
         this.y = y;
+    }
+
+    public int getValue() {
+        return value;
+    }
+
+    public void setValue(int value) {
+        this.value = value;
     }
 }

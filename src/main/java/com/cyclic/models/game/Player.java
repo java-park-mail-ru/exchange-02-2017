@@ -1,26 +1,33 @@
 package com.cyclic.models.game;
 
+import com.cyclic.models.game.net.ConnectionError;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
+
+import static com.cyclic.models.game.net.ConnectionError.DISCONNECT_REASON_API_HACKER;
 
 /**
  * Created by serych on 01.04.17.
  */
 public class Player {
 
-    public static final int DISCONNECT_REASON_API_HACKER = 1;
-
-    private String nickname = "";
-    private long id = 0;
+    private String nickname;
+    private long id;
     private long totalScore = 0;
     private transient Room room = null;
     private transient WebSocketSession webSocketSession;
+    private transient Gson gson;
     private boolean readyForGameStart = false;
 
-    public Player(WebSocketSession webSocketSession) {
+    public Player(WebSocketSession webSocketSession, String nickname, long id) {
         this.webSocketSession = webSocketSession;
+        this.gson = new GsonBuilder().create();
+        this.nickname = nickname;
+        this.id = id;
     }
 
     public String getNickname() {
@@ -55,7 +62,7 @@ public class Player {
         this.room = room;
     }
 
-    public void send(String data) {
+    public void sendString(String data) {
         try {
             webSocketSession.sendMessage(new TextMessage(data));
         } catch (IOException e) {
@@ -65,10 +72,6 @@ public class Player {
 
     public WebSocketSession getWebSocketSession() {
         return webSocketSession;
-    }
-
-    public void delete() {
-
     }
 
     public void setWebSocketSession(WebSocketSession webSocketSession) {
@@ -85,8 +88,8 @@ public class Player {
             room.start();
     }
 
-    public void disconnect(int reason) {
-        send("{disconnectreason:" + reason + "}");
+    public void disconnect(int code, String data) {
+        sendString(gson.toJson(new ConnectionError(code, data)));
         try {
             webSocketSession.close();
         } catch (IOException e) {
@@ -95,6 +98,11 @@ public class Player {
     }
 
     public void disconnectBadApi() {
-        disconnect(DISCONNECT_REASON_API_HACKER);
+        disconnect(DISCONNECT_REASON_API_HACKER, "");
+    }
+
+    @Override
+    public int hashCode() {
+        return nickname.hashCode();
     }
 }
