@@ -1,10 +1,8 @@
 package com.cyclic.controllers;
 
 import com.cyclic.LOG;
-import com.cyclic.models.User;
 import com.cyclic.models.WebSocketAnswer;
 import com.cyclic.models.game.Player;
-import com.cyclic.models.game.net.ConnectionError;
 import com.cyclic.models.game.net.HelloMessage;
 import com.cyclic.services.AccountServiceDB;
 import com.cyclic.services.game.PlayerManager;
@@ -13,13 +11,11 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cglib.core.Local;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
-import java.util.TreeSet;
 import java.util.concurrent.ThreadLocalRandom;
 
 
@@ -55,6 +51,8 @@ public class WebSocketController extends TextWebSocketHandler {
         Player player = playerManager.getPlayerForSession(session);
         roomManager.deletePlayerFromAnyRoom(player);
         playerManager.deletePlayer(player);
+        LOG.webSocketLog("Websocket disconnected.  IP: " + session.getRemoteAddress() +
+                ", Nick: " + player.getNickname());
     }
 
     @Override
@@ -71,7 +69,8 @@ public class WebSocketController extends TextWebSocketHandler {
                 "Nick" + ThreadLocalRandom.current().nextInt(0, 9999),
                 ThreadLocalRandom.current().nextInt(0, 9999));
         playerManager.createPlayer(session, player);
-
+        LOG.webSocketLog("New websocket connected. IP: " + session.getRemoteAddress() +
+        ", Nick: " + player.getNickname());
         session.sendMessage(new TextMessage(gson.toJson(new HelloMessage(player.getNickname(), player.getId()))));
     }
 

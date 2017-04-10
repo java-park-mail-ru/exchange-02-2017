@@ -52,9 +52,6 @@ public class GameField {
     }
 
     public Node addRandomBonus() {
-
-        ThreadLocalRandom.current().nextInt(Room.BONUS_MIN_VALUE, Room.BONUS_MAX_VALUE + 1);
-
         Point point = findRandomNullPoint();
         if (point == null)
             return null;
@@ -73,8 +70,8 @@ public class GameField {
         int x = 0, y = 0;
         // try to find random point 10 times
         for (int i = 0; i < 10; i++) {
-            x = ThreadLocalRandom.current().nextInt(0, width + 1);
-            y = ThreadLocalRandom.current().nextInt(0, height + 1);
+            x = ThreadLocalRandom.current().nextInt(0, width);
+            y = ThreadLocalRandom.current().nextInt(0, height);
             if (world[x][y] == null) {
                 return new Point(x, y);
             }

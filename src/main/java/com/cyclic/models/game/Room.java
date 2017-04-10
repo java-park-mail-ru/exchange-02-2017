@@ -21,17 +21,18 @@ public class Room {
     public static final int PLAYERS_COUNT = 2;
     public static final int START_BONUS_COUNT = 10;
     public static final int BONUS_MIN_VALUE = 10;
-    public static final int BONUS_MAX_VALUE = 1000;
-    public static final int FIELD_WIDTH  = 20;
-    public static final int FIELD_HEIGHT = 20;
+    public static final int BONUS_MAX_VALUE = 100;
+    public static final int FIELD_WIDTH  = 100;
+    public static final int FIELD_HEIGHT = 100;
 
     private final int datatype = DATATYPE_ROOMINFO;
     private Vector<Player> players;
-    private transient GameField field;
     private int performingId;
     private int status;
     private long roomID;
+
     private transient Gson gson;
+    private transient GameField field;
 
     public Room(long roomID) {
         status = STATUS_CREATING;
@@ -57,8 +58,6 @@ public class Room {
         if (status != STATUS_CREATING)
             return false;
         // TODO: Link webSocket session and HTTP session and give normal nickname
-        player.setNickname("Nick" + ThreadLocalRandom.current().nextInt(0, 999999 + 1));
-        player.setId(players.size());
         player.setRoom(this);
         players.add(player);
         if (players.size() == PLAYERS_COUNT) {
@@ -145,6 +144,9 @@ public class Room {
     public void stop() {
         status = STATUS_CREATING;
         field = null;
+        for (Player player:players) {
+            player.setReadyForGameStart(false);
+        }
         broadcastRoomUpdate();
     }
 }
