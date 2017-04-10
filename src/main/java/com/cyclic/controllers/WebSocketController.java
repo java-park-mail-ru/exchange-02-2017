@@ -90,7 +90,8 @@ public class WebSocketController extends TextWebSocketHandler {
             if (player == null)
                 return;
             if (webSocketAnswer.getActionCode() == null)
-                player.disconnectBadApi();
+                player.disconnectBadApi("There is no actionCode!");
+            LOG.webSocketLog("Message from Ip " + session.getRemoteAddress() + ". Code: " + webSocketAnswer.getActionCode());
             switch (webSocketAnswer.getActionCode()) {
                 case WebSocketAnswer.READY_FOR_ROOM_SEARCH:
                     roomManager.findRoomForThisGuy(player);
@@ -105,7 +106,7 @@ public class WebSocketController extends TextWebSocketHandler {
                     player.getRoom().acceptMove(player);
                     break;
                 default:
-                    player.disconnectBadApi();
+                    player.disconnectBadApi("Unknown actionCode");
             }
         }
         else {

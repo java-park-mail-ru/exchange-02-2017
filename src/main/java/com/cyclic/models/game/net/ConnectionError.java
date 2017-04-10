@@ -12,11 +12,11 @@ public class ConnectionError {
 
     private final int datatype = DATATYPE_ERROR;
     private int code;
-    private String data;
+    private String reason;
 
-    public ConnectionError(int code, String data) {
+    public ConnectionError(int code, String reason) {
         this.code = code;
-        this.data = data;
+        this.reason = reason;
     }
 
     public int getCode() {
@@ -27,11 +27,11 @@ public class ConnectionError {
         this.code = code;
     }
 
-    public String getData() {
-        return data;
+    public String getReason() {
+        return reason;
     }
 
-    public void setData(String data) {
-        this.data = data;
+    public void setReason(String reason) {
+        this.reason = reason;
     }
 }

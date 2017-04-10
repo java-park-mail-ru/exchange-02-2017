@@ -8,8 +8,8 @@ public class CreateMove {
     private Integer yfrom;
     private Integer xto;
     private Integer yto;
-    private Integer type;
     private Integer unitsCount;
+    private int parentUnitsCount;
 
     public Integer getXfrom() {
         return xfrom;
@@ -31,7 +31,11 @@ public class CreateMove {
         return unitsCount;
     }
 
-    public Integer getType() {
-        return type;
+    public int getParentUnitsCount() {
+        return parentUnitsCount;
+    }
+
+    public void setParentUnitsCount(int parentUnitsCount) {
+        this.parentUnitsCount = parentUnitsCount;
     }
 }

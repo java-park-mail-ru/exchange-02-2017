@@ -28,7 +28,7 @@ public class RoomManager {
 
     public void findRoomForThisGuy(Player player) {
         if (getPlayersRoom(player) != null) {
-            player.disconnectBadApi();
+            player.disconnectBadApi("You already have a room");
             return;
         }
         if (freeRooms.isEmpty()) {

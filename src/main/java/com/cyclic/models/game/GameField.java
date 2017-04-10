@@ -1,5 +1,6 @@
 package com.cyclic.models.game;
 
+import com.cyclic.controllers.WebSocketController;
 import com.cyclic.models.game.moves.CreateMove;
 import com.cyclic.models.game.net.NewBonusBroadcast;
 
@@ -30,26 +31,26 @@ public class GameField {
     }
 
     public Node getByPosition(int x, int y) {
-        return world[x][y];
+        return world[y][x];
     }
 
-    public Node addNewTower(Node src, Node dst) {
-        if (src.getType() != Node.NODE_TOWER || dst.getType() != Node.NODE_TOWER) {
-            return null;
-        }
-        int newX = dst.getX();
-        int newY = dst.getY();
-
-        if(src.getX() == newX && src.getY() == newY)
-            return null;
-
-        if(getByPosition(newX, newY) == null) {
-            src.addChild(dst);
-            world[newX][newY] = dst;
-            return dst;
-        }
-        return null;
-    }
+//    public Node addNewTower(Node src, Node dst) {
+//        if (src.getType() != Node.NODE_TOWER || dst.getType() != Node.NODE_TOWER) {
+//            return null;
+//        }
+//        int newX = dst.getX();
+//        int newY = dst.getY();
+//
+//        if(src.getX() == newX && src.getY() == newY)
+//            return null;
+//
+//        if(getByPosition(newX, newY) == null) {
+//            src.addChild(dst);
+//            world[newX][newY] = dst;
+//            return dst;
+//        }
+//        return null;
+//    }
 
     public Node addRandomBonus() {
         Point point = findRandomNullPoint();
@@ -61,7 +62,7 @@ public class GameField {
                 Node.NODE_BONUS, point.x, point.y
                 );
 
-        world[point.x][point.y] = node;
+        world[point.y][point.x] = node;
         room.broadcast(room.getGson().toJson(new NewBonusBroadcast(point.x, point.y, node.getValue())));
         return node;
     }
@@ -72,7 +73,7 @@ public class GameField {
         for (int i = 0; i < 10; i++) {
             x = ThreadLocalRandom.current().nextInt(0, width);
             y = ThreadLocalRandom.current().nextInt(0, height);
-            if (world[x][y] == null) {
+            if (world[y][x] == null) {
                 return new Point(x, y);
             }
         }
@@ -86,7 +87,7 @@ public class GameField {
             if (y == height) {
                 y = 0;
             }
-            if (world[x][y] == null) {
+            if (world[y][x] == null) {
                 return new Point(x, y);
             }
         }
@@ -108,20 +109,39 @@ public class GameField {
 
     public boolean acceptMove() {
         for (CreateMove createMove : possibleMoves.getCreateMoves()) {
-            Node n1 = world[createMove.getXfrom()][createMove.getYfrom()];
-            Node n2 = world[createMove.getXto()][createMove.getYto()];
-            if (n1 != null && n1.getPlayerID() == room.getPerformingId() && n2 == null) {
-                world[createMove.getXto()][createMove.getYto()] = new Node(
+            Node n1 = getByPosition(createMove.getXfrom(), createMove.getYfrom());
+            Node n2 = getByPosition(createMove.getXto(), createMove.getYto());
+            if (n1 != null && n1.getPlayerID() == room.getPid()) {
+                if (n2 != null && n2.getType() == Node.NODE_TOWER)
+                    return false;
+                int newUnits = n1.getValue();
+                if(n2 != null && n2.getType() == Node.NODE_BONUS) {
+                    newUnits = n2.getValue();
+                } else {
+                    newUnits /= 2;
+                    n1.setValue(n1.getValue() - newUnits);
+                }
+                createMove.setParentUnitsCount(n1.getValue());
+                setNodeToPosition(createMove.getXto(), createMove.getYto(), new Node(
                         n1,
-                        room.getPerformingId(),
-                        createMove.getUnitsCount(), createMove.getType(),
+                        room.getPid(),
+                        newUnits,
+                        Node.NODE_TOWER,
                         createMove.getXto(),
-                        createMove.getYto());
+                        createMove.getYto()));
+
+                return true;
             }
             else {
                 return false;
             }
         }
         return true;
+    }
+
+    public void setNodeToPosition(int beginX, int beginY, Node node) {
+        if (beginX < 0 || beginX >= width || beginY < 0 || beginY >= height)
+            return;
+        world[beginY][beginX] = node;
     }
 }

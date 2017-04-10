@@ -1,5 +1,6 @@
 package com.cyclic.models.game;
 
+import com.cyclic.LOG;
 import com.cyclic.models.game.net.ConnectionError;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -18,9 +19,9 @@ public class Player {
 
     private String nickname;
     private long id;
-    private long totalScore = 0;
-    private long beginX = 0;
-    private long beginY = 0;
+    private long units = Room.START_TOWER_UNITS;
+    private int beginX = 0;
+    private int beginY = 0;
     private transient Room room = null;
     private transient WebSocketSession webSocketSession;
     private transient Gson gson;
@@ -47,16 +48,12 @@ public class Player {
         return id;
     }
 
-    public void setId(long id) {
-        this.id = id;
+    public long getUnits() {
+        return units;
     }
 
-    public long getTotalScore() {
-        return totalScore;
-    }
-
-    public void setTotalScore(long totalScore) {
-        this.totalScore = totalScore;
+    public void setUnits(long units) {
+        this.units = units;
     }
 
     public Room getRoom() {
@@ -71,7 +68,7 @@ public class Player {
         try {
             webSocketSession.sendMessage(new TextMessage(data));
         } catch (IOException e) {
-            e.printStackTrace();
+            LOG.error(e);
         }
     }
 
@@ -106,11 +103,25 @@ public class Player {
     }
 
     public void disconnectBadApi() {
+        LOG.errorConsole(nickname + " is hacker! Ip: " + getWebSocketSession().getRemoteAddress() + ". Kick him!");
         disconnect(DISCONNECT_REASON_API_HACKER, "");
+    }
+
+    public void disconnectBadApi(String reason) {
+        LOG.errorConsole(nickname + " is hacker! Ip: " + getWebSocketSession().getRemoteAddress() + ". Reason: " + reason);
+        disconnect(DISCONNECT_REASON_API_HACKER, reason);
     }
 
     @Override
     public int hashCode() {
         return nickname.hashCode();
+    }
+
+    public int getBeginX() {
+        return beginX;
+    }
+
+    public int getBeginY() {
+        return beginY;
     }
 }

@@ -8,17 +8,17 @@ import java.util.Vector;
 public class Node {
 
     public static final int NODE_TOWER = 0;
-    public static final int NODE_BONUS = 0;
+    public static final int NODE_BONUS = 1;
 
     private Node parentNode;
     private Vector<Node> nextNodes;
-    private int playerID;
+    private long playerID;
     private int value;
     private int type;
     private int x;
     private int y;
 
-    public Node(Node parentNode, int playerID, int value, int type, int x, int y) {
+    public Node(Node parentNode, long playerID, int value, int type, int x, int y) {
         this.parentNode = parentNode;
         this.value = value;
         this.nextNodes = new Vector<>();
@@ -48,12 +48,8 @@ public class Node {
         this.nextNodes = nextNodes;
     }
 
-    public int getPlayerID() {
+    public long getPlayerID() {
         return playerID;
-    }
-
-    public void setPlayerID(int playerID) {
-        this.playerID = playerID;
     }
 
     public int getType() {
@@ -86,5 +82,9 @@ public class Node {
 
     public void setValue(int value) {
         this.value = value;
+    }
+
+    public void addToValue(int inc) {
+        this.value += inc;
     }
 }
