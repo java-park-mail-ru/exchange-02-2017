@@ -105,6 +105,10 @@ public class GameField {
 
     public void setPossibleMoves(Moves possibleMoves) {
         this.possibleMoves = possibleMoves;
+        for (CreateMove createMove : possibleMoves.getCreateMoves()) {
+            Node n1 = getByPosition(createMove.getXfrom(), createMove.getYfrom());
+            createMove.setParentUnitsCount(n1.getValue());
+        }
     }
 
     public boolean acceptMove() {
