@@ -25,7 +25,7 @@ import javax.servlet.http.HttpSession;
         maxAge = 3600,
         allowedHeaders = {"Content-Type", "Origin", "X-Requested-With", "Accept"},
         allowCredentials = "true",
-        origins = {"http://localhost:3000"}
+        origins = {"http://localhost:3000", "https://cyclic-front.herokuapp.com"}
 )
 @RequestMapping(path = "/api/login")
 public class AuthController {
