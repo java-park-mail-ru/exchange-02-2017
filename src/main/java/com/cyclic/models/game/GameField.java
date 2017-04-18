@@ -5,6 +5,7 @@ import com.cyclic.models.game.moves.CreateMove;
 import com.cyclic.models.game.net.NewBonusBroadcast;
 
 import java.awt.*;
+import java.util.Vector;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -52,19 +53,21 @@ public class GameField {
 //        return null;
 //    }
 
-    public Node addRandomBonus() {
-        Point point = findRandomNullPoint();
-        if (point == null)
-            return null;
-        Node node = new Node(null,
-                0,
-                ThreadLocalRandom.current().nextInt(Room.BONUS_MIN_VALUE, Room.BONUS_MAX_VALUE + 1),
-                Node.NODE_BONUS, point.x, point.y
-                );
-
-        world[point.y][point.x] = node;
-        room.broadcast(room.getGson().toJson(new NewBonusBroadcast(point.x, point.y, node.getValue())));
-        return node;
+    public void addRandomBonuses(int count) {
+        Vector<Bonus> bonuses = new Vector<>();
+        for (int i = 0; i < count; i++) {
+            Point point = findRandomNullPoint();
+            if (point == null)
+                return;
+            Node node = new Node(null,
+                    0,
+                    ThreadLocalRandom.current().nextInt(Room.BONUS_MIN_VALUE, Room.BONUS_MAX_VALUE + 1),
+                    Node.NODE_BONUS, point.x, point.y
+            );
+            world[point.y][point.x] = node;
+            bonuses.add(new Bonus(point.x, point.y, node.getValue()));
+        }
+        room.broadcast(room.getGson().toJson(new NewBonusBroadcast(bonuses)));
     }
 
     public Point findRandomNullPoint() {

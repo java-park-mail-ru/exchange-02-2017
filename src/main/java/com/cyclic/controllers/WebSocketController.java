@@ -1,8 +1,10 @@
 package com.cyclic.controllers;
 
 import com.cyclic.LOG;
+import com.cyclic.models.User;
 import com.cyclic.models.WebSocketAnswer;
 import com.cyclic.models.game.Player;
+import com.cyclic.models.game.net.ConnectionError;
 import com.cyclic.models.game.net.HelloMessage;
 import com.cyclic.services.AccountServiceDB;
 import com.cyclic.services.game.PlayerManager;
@@ -26,15 +28,19 @@ public class WebSocketController extends TextWebSocketHandler {
     public static final int DATATYPE_NEWBONUS = 3;
     public static final int DATATYPE_ERROR = 4;
     public static final int DATATYPE_HELLO = 5;
+    public static final int DATATYPE_ROOM_DESTRUCTION = 6;
+    public static final int DATATYPE_PLAYER_DISCONNECT = 7;
+    public static final int DATATYPE_ACCEPT_MOVE = 8;
 
     private RoomManager roomManager;
     private PlayerManager playerManager;
     private Gson gson;
 
-    @Autowired
     private AccountServiceDB accountService;
 
-    public WebSocketController() {
+    @Autowired
+    public WebSocketController(AccountServiceDB accountService) {
+        this.accountService = accountService;
         roomManager = new RoomManager();
         playerManager = new PlayerManager();
         gson = new GsonBuilder().create();
@@ -49,26 +55,31 @@ public class WebSocketController extends TextWebSocketHandler {
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
         Player player = playerManager.getPlayerForSession(session);
-        roomManager.deletePlayerFromAnyRoom(player);
-        playerManager.deletePlayer(player);
-        LOG.webSocketLog("Websocket disconnected.  IP: " + session.getRemoteAddress() +
-                ", Nick: " + player.getNickname());
+        if (player != null) {
+            roomManager.deletePlayerFromAnyRoom(player);
+            playerManager.deletePlayer(player);
+            LOG.webSocketLog("Websocket disconnected.  IP: " + session.getRemoteAddress() +
+                    ", Nick: " + player.getNickname());
+        }
     }
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         //TODO: uncomment this, test and add to production when frontend will be ready
-//        final Long id = (Long) session.getAttributes().get("userid");
-//        User user = accountService.getUserById(id);
-//        if (user == null) {
-//            session.sendMessage(new TextMessage(gson.toJson(new ConnectionError(ConnectionError.DISCONNECT_REASON_NOT_LOGINED, ""))));
-//            session.close();
-//        }
-//        playerManager.createPlayer(session, new Player(session, user.getLogin(), user.getId()));
-        Player player = new Player(session,
-                "Nick" + ThreadLocalRandom.current().nextInt(0, 9999),
-                ThreadLocalRandom.current().nextInt(0, 9999));
+        final Long id = (Long) session.getAttributes().get("userId");
+        User user = accountService.getUserById(id);
+        if (user == null) {
+            session.sendMessage(new TextMessage(gson.toJson(new ConnectionError(ConnectionError.DISCONNECT_REASON_NOT_LOGINED, ""))));
+            session.close();
+            return;
+        }
+        System.out.println(user.getLogin());
+        Player player = new Player(session, user.getLogin(), user.getId());
         playerManager.createPlayer(session, player);
+//        Player player = new Player(session,
+//                "Nick" + ThreadLocalRandom.current().nextInt(0, 9999),
+//                ThreadLocalRandom.current().nextInt(0, 9999));
+//        playerManager.createPlayer(session, player);
         LOG.webSocketLog("New websocket connected. IP: " + session.getRemoteAddress() +
         ", Nick: " + player.getNickname());
         session.sendMessage(new TextMessage(gson.toJson(new HelloMessage(player.getNickname(), player.getId()))));

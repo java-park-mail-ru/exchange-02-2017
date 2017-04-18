@@ -26,7 +26,7 @@ import java.io.IOException;
         maxAge = 3600,
         allowedHeaders = {"Content-Type", "Origin", "X-Requested-With", "Accept"},
         allowCredentials = "true",
-        origins = {"http://localhost:3000", "https://cyclic-front.herokuapp.com"}
+        origins = {"http://localhost:3000", "https://cyclic-front.herokuapp.com", "http://172.20.10.2:3000", "http://172.20.10.2:3000"}
 )
 @RequestMapping(path = "/api/user")
 public class UserController {

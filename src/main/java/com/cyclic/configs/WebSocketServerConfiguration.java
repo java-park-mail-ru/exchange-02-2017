@@ -1,6 +1,8 @@
 package com.cyclic.configs;
 
 import com.cyclic.controllers.WebSocketController;
+import com.cyclic.services.AccountServiceDB;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
@@ -20,9 +22,12 @@ import java.util.Map;
 @EnableWebSocket
 public class WebSocketServerConfiguration implements WebSocketConfigurer {
 
+    @Autowired
+    private AccountServiceDB accountService;
+
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(new WebSocketController(), "/game")
+        registry.addHandler(new WebSocketController(accountService), "/game")
                 .addInterceptors(new HttpSessionHandshakeInterceptor())
                 .setAllowedOrigins("*");
     }

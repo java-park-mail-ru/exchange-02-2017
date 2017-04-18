@@ -1,6 +1,9 @@
 package com.cyclic.models.game;
 
+import com.cyclic.models.game.net.MoveAcceptBroadcast;
+import com.cyclic.models.game.net.PlayerDisconnectBroadcast;
 import com.cyclic.models.game.net.PlayerMoveBroadcast;
+import com.cyclic.models.game.net.RoomDestructionBroadcast;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -33,13 +36,13 @@ public class Room {
     private int status;
     private long roomID;
 
-    private transient int performingId;
+    private transient int performingPlayerIndex;
     private transient Gson gson;
     private transient GameField field;
 
     public Room(long roomID) {
         status = STATUS_CREATING;
-        players = new Vector<>(4);
+        players = new Vector<>(PLAYERS_COUNT);
         field = null;
         gson = new GsonBuilder().create();
         this.roomID = roomID;
@@ -58,6 +61,11 @@ public class Room {
         return players.size() == PLAYERS_COUNT;
     }
 
+    /**
+     * Adds player to this room
+     * @param player Player to add
+     * @return True if the player was added. False if error has occurred
+     */
     public boolean addPlayer(Player player) {
         if (status != STATUS_CREATING)
             return false;
@@ -71,23 +79,53 @@ public class Room {
         return true;
     }
 
-    public void removePlayer(Player player) {
-        if (players.remove(player))
-            stop();
+    /**
+     * @param player Player to remove from this room
+     * @return If the last player in this room, give him another room
+     */
+    public Player removePlayer(Player player) {
+        if (players.remove(player)) {
+            if (getPlayersCount() > 1) {
+                broadcast(gson.toJson(new PlayerDisconnectBroadcast(player.getId())));
+                if (status == STATUS_PLAYING){
+                    performingPlayerIndex %= PLAYERS_COUNT;
+                    pid = players.get(performingPlayerIndex).getId();
+                }
+                broadcastRoomUpdate();
+                return null;
+            }
+            else {
+                broadcast(gson.toJson(new RoomDestructionBroadcast()));
+                if (players.get(0) != null)
+                    return players.get(0);
+            }
+        }
+        return null;
     }
 
+    /**
+     * Broadcasts this room info to all players in this room
+     */
     private void broadcastRoomUpdate() {
         for (Player player: players) {
             player.sendString(gson.toJson(this));
         }
     }
 
+    /**
+     * Broadcasts data to all players in this room
+     * @param data Data to broadcast
+     */
     public void broadcast(String data) {
         for (Player player: players) {
             player.sendString(data);
         }
     }
 
+    /**
+     * Start room!
+     * @return True if room started. False if error has occurred
+     */
     public boolean start() {
         if (status == STATUS_READY) {
             for (Player player: players) {
@@ -97,8 +135,8 @@ public class Room {
                 }
             }
             status = STATUS_PLAYING;
-            performingId = ThreadLocalRandom.current().nextInt(0, Room.PLAYERS_COUNT);
-            pid = players.get(performingId).getId();
+            performingPlayerIndex = ThreadLocalRandom.current().nextInt(0, Room.PLAYERS_COUNT);
+            pid = players.get(performingPlayerIndex).getId();
             broadcastRoomUpdate();
             field = new GameField(this, FIELD_HEIGHT, FIELD_WIDTH);
             for (Player player: players) {
@@ -110,9 +148,7 @@ public class Room {
                         player.getBeginY());
                 field.setNodeToPosition(player.getBeginX(), player.getBeginY(), node);
             }
-            for (int i = 0; i < START_BONUS_COUNT; i++) {
-                field.addRandomBonus();
-            }
+            field.addRandomBonuses(START_BONUS_COUNT);
             return true;
         }
         broadcastRoomUpdate();
@@ -140,18 +176,15 @@ public class Room {
                 return;
             }
             broadcast(gson.toJson(new PlayerMoveBroadcast(player.getId(), MOVE_NORM, field.getPossibleMoves())));
-            performingId += 1;
-            performingId %= PLAYERS_COUNT;
-            pid = players.get(performingId).getId();
-            broadcastRoomUpdate();
+            long lastPid = pid;
+            performingPlayerIndex += 1;
+            performingPlayerIndex %= PLAYERS_COUNT;
+            pid = players.get(performingPlayerIndex).getId();
+            broadcast(gson.toJson(new MoveAcceptBroadcast(lastPid, pid)));
         }
         else {
             player.disconnectBadApi("Cannot accept. It is not your move.");
         }
-    }
-
-    public int getPerformingId() {
-        return performingId;
     }
 
     public Long getPid() {
@@ -160,19 +193,5 @@ public class Room {
 
     public Gson getGson() {
         return gson;
-    }
-
-    public void stop() {
-        status = STATUS_CREATING;
-        if (players.size() == PLAYERS_COUNT) {
-            status = STATUS_READY;
-        }
-        if (players.size() == 1) {
-
-        }
-        field = null;
-        pid = null;
-
-        broadcastRoomUpdate();
     }
 }

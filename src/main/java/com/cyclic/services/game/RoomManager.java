@@ -48,11 +48,9 @@ public class RoomManager {
         Room room = allRooms.remove(player);
         if (room == null)
             return;
-        room.removePlayer(player);
-        room.stop();
-        if (!room.isEmpty())
-            freeRooms.add(room);
+        Player lastPlayer = room.removePlayer(player);
+        if (lastPlayer != null) {
+            findRoomForThisGuy(lastPlayer);
+        }
     }
-
-
 }
