@@ -141,4 +141,5 @@ public class AccountServiceDB implements AccountService {
         final String lastName = rs.getString("lastName");
         return new User(id, firstName, lastName, email, login, password);
     };
+    
 }
