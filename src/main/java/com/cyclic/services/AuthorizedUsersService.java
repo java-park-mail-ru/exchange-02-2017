@@ -27,5 +27,6 @@ public class AuthorizedUsersService {
     public boolean isLogged(HttpSession httpSession){
         return authorizedUsers.containsKey(httpSession);
     }
+    
 
 }
