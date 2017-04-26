@@ -3,7 +3,6 @@ package com.cyclic.services.game;
 import com.cyclic.models.game.Player;
 import org.springframework.web.socket.WebSocketSession;
 
-import javax.validation.constraints.NotNull;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**

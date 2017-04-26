@@ -1,12 +1,13 @@
 package com.cyclic.models.game;
 
-import com.cyclic.controllers.WebSocketController;
-import com.cyclic.models.game.moves.CreateMove;
 import com.cyclic.models.game.net.NewBonusBroadcast;
 
 import java.awt.*;
 import java.util.Vector;
 import java.util.concurrent.ThreadLocalRandom;
+
+import static com.cyclic.configs.Constants.NODE_BONUS;
+import static com.cyclic.configs.Constants.NODE_TOWER;
 
 /**
  * Created by serych on 03.04.17.
@@ -15,7 +16,6 @@ public class GameField {
     private transient int height, width;
     private transient Node[][] world;
     private transient Room room;
-    private transient Moves possibleMoves;
 
 
     public GameField(Room room, int height, int width) {
@@ -53,7 +53,7 @@ public class GameField {
 //        return null;
 //    }
 
-    public void addRandomBonuses(int count) {
+    public void addAndBroadcastRandomBonuses(int count) {
         Vector<Bonus> bonuses = new Vector<>();
         for (int i = 0; i < count; i++) {
             Point point = findRandomNullPoint();
@@ -62,7 +62,7 @@ public class GameField {
             Node node = new Node(null,
                     0,
                     ThreadLocalRandom.current().nextInt(Room.BONUS_MIN_VALUE, Room.BONUS_MAX_VALUE + 1),
-                    Node.NODE_BONUS, point.x, point.y
+                    NODE_BONUS, point.x, point.y
             );
             world[point.y][point.x] = node;
             bonuses.add(new Bonus(point.x, point.y, node.getValue()));
@@ -102,48 +102,31 @@ public class GameField {
         room = null;
     }
 
-    public Moves getPossibleMoves() {
-        return possibleMoves;
-    }
-
-    public void setPossibleMoves(Moves possibleMoves) {
-        this.possibleMoves = possibleMoves;
-        for (CreateMove createMove : possibleMoves.getCreateMoves()) {
-            Node n1 = getByPosition(createMove.getXfrom(), createMove.getYfrom());
-            createMove.setParentUnitsCount(n1.getValue());
-        }
-    }
-
-    public boolean acceptMove() {
-        for (CreateMove createMove : possibleMoves.getCreateMoves()) {
-            Node n1 = getByPosition(createMove.getXfrom(), createMove.getYfrom());
-            Node n2 = getByPosition(createMove.getXto(), createMove.getYto());
-            if (n1 != null && n1.getPlayerID() == room.getPid()) {
-                if (n2 != null && n2.getType() == Node.NODE_TOWER)
-                    return false;
-                int newUnits = n1.getValue();
-                if(n2 != null && n2.getType() == Node.NODE_BONUS) {
-                    newUnits = n2.getValue();
-                } else {
-                    newUnits /= 2;
-                    n1.setValue(n1.getValue() - newUnits);
-                }
-                createMove.setParentUnitsCount(n1.getValue());
-                setNodeToPosition(createMove.getXto(), createMove.getYto(), new Node(
-                        n1,
-                        room.getPid(),
-                        newUnits,
-                        Node.NODE_TOWER,
-                        createMove.getXto(),
-                        createMove.getYto()));
-
-                return true;
-            }
-            else {
+    public boolean acceptMove(Player player, Move move) {
+        Node n1 = getByPosition(move.getXfrom(), move.getYfrom());
+        Node n2 = getByPosition(move.getXto(), move.getYto());
+        if (n1 != null && n1.getPlayerID() == room.getPid()) {
+            if (n2 != null && n2.getType() == NODE_TOWER)
                 return false;
+            int newUnits = n1.getValue();
+            if (n2 != null && n2.getType() == NODE_BONUS) {
+                newUnits = n2.getValue();
+            } else {
+                newUnits /= 2;
+                n1.setValue(n1.getValue() - newUnits);
             }
+            move.setParentUnitsCount(n1.getValue());
+            setNodeToPosition(move.getXto(), move.getYto(), new Node(
+                    n1,
+                    room.getPid(),
+                    newUnits,
+                    NODE_TOWER,
+                    move.getXto(),
+                    move.getYto()));
+
+            return true;
         }
-        return true;
+        return false;
     }
 
     public void setNodeToPosition(int beginX, int beginY, Node node) {

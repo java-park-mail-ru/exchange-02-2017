@@ -18,19 +18,10 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
-import java.util.concurrent.ThreadLocalRandom;
+import static com.cyclic.configs.Constants.*;
 
 
 public class WebSocketController extends TextWebSocketHandler {
-
-    public static final int DATATYPE_ROOMINFO = 1;
-    public static final int DATATYPE_PLAYERMOVE = 2;
-    public static final int DATATYPE_NEWBONUS = 3;
-    public static final int DATATYPE_ERROR = 4;
-    public static final int DATATYPE_HELLO = 5;
-    public static final int DATATYPE_ROOM_DESTRUCTION = 6;
-    public static final int DATATYPE_PLAYER_DISCONNECT = 7;
-    public static final int DATATYPE_ACCEPT_MOVE = 8;
 
     private RoomManager roomManager;
     private PlayerManager playerManager;
@@ -69,11 +60,12 @@ public class WebSocketController extends TextWebSocketHandler {
         final Long id = (Long) session.getAttributes().get("userId");
         User user = accountService.getUserById(id);
         if (user == null) {
+            LOG.errorConsole("Unlogined user try to play");
             session.sendMessage(new TextMessage(gson.toJson(new ConnectionError(ConnectionError.DISCONNECT_REASON_NOT_LOGINED, ""))));
             session.close();
             return;
         }
-        System.out.println(user.getLogin());
+        //System.out.println(user.getLogin());
         Player player = new Player(session, user.getLogin(), user.getId());
         playerManager.createPlayer(session, player);
 //        Player player = new Player(session,
@@ -102,19 +94,18 @@ public class WebSocketController extends TextWebSocketHandler {
                 return;
             if (webSocketAnswer.getActionCode() == null)
                 player.disconnectBadApi("There is no actionCode!");
-            LOG.webSocketLog("Message from Ip " + session.getRemoteAddress() + ". Code: " + webSocketAnswer.getActionCode());
+            LOG.webSocketLog("Message from " + player.getNickname()+ " (Ip " + session.getRemoteAddress() + "). Code: " + webSocketAnswer.getActionCode());
             switch (webSocketAnswer.getActionCode()) {
-                case WebSocketAnswer.READY_FOR_ROOM_SEARCH:
+                case ACTION_READY_FOR_ROOM_SEARCH:
                     roomManager.findRoomForThisGuy(player);
                     break;
-                case WebSocketAnswer.READY_FOR_GAME_START:
+                case ACTION_READY_FOR_GAME_START:
                     player.setReadyForGameStart(true);
                     break;
-                case WebSocketAnswer.GAME_UPDATE_MY_MOVE:
-                    player.getRoom().handlePlayersMove(player, webSocketAnswer.getMoves());
-                    break;
-                case WebSocketAnswer.GAME_ACCEPT_MY_MOVE:
-                    player.getRoom().acceptMove(player);
+                case ACTION_GAME_MOVE:
+                    if (player.getRoom() == null)
+                        player.disconnectBadApi("You move without answer");
+                    player.getRoom().acceptMove(player, webSocketAnswer.getMove());
                     break;
                 default:
                     player.disconnectBadApi("Unknown actionCode");

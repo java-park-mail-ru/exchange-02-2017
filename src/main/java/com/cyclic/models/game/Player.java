@@ -8,7 +8,6 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
-import java.util.concurrent.ThreadLocalRandom;
 
 import static com.cyclic.models.game.net.ConnectionError.DISCONNECT_REASON_API_HACKER;
 
@@ -28,8 +27,6 @@ public class Player {
     private boolean readyForGameStart = false;
 
     public Player(WebSocketSession webSocketSession, String nickname, long id) {
-        beginX = ThreadLocalRandom.current().nextInt(0, Room.FIELD_WIDTH);
-        beginY = ThreadLocalRandom.current().nextInt(0, Room.FIELD_HEIGHT);
         this.webSocketSession = webSocketSession;
         this.gson = new GsonBuilder().create();
         this.nickname = nickname;
@@ -121,7 +118,15 @@ public class Player {
         return beginX;
     }
 
+    public void setBeginX(int beginX) {
+        this.beginX = beginX;
+    }
+
     public int getBeginY() {
         return beginY;
+    }
+
+    public void setBeginY(int beginY) {
+        this.beginY = beginY;
     }
 }

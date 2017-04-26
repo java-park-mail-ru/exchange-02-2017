@@ -11,6 +11,7 @@ public class LOG {
     public static void errorConsole(String string) {
         System.out.println("\u001B[35m" + string + "\u001B[0m");
     }
+
     public static void error(Exception e) {
         //e.printStackTrace();
     }

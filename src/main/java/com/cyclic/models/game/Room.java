@@ -1,18 +1,17 @@
 package com.cyclic.models.game;
 
-import com.cyclic.models.game.net.MoveAcceptBroadcast;
 import com.cyclic.models.game.net.PlayerDisconnectBroadcast;
 import com.cyclic.models.game.net.PlayerMoveBroadcast;
 import com.cyclic.models.game.net.RoomDestructionBroadcast;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import java.awt.*;
 import java.util.Vector;
 import java.util.concurrent.ThreadLocalRandom;
 
-import static com.cyclic.controllers.WebSocketController.DATATYPE_ROOMINFO;
-import static com.cyclic.models.game.net.PlayerMoveBroadcast.MOVE_NORM;
-import static com.cyclic.models.game.net.PlayerMoveBroadcast.MOVE_TEMP;
+import static com.cyclic.configs.Constants.DATATYPE_ROOMINFO;
+import static com.cyclic.configs.Constants.NODE_TOWER;
 
 /**
  * Created by serych on 31.03.17.
@@ -27,7 +26,7 @@ public class Room {
     public static final int START_TOWER_UNITS = 100;
     public static final int BONUS_MIN_VALUE = 10;
     public static final int BONUS_MAX_VALUE = 100;
-    public static final int FIELD_WIDTH  = 20;
+    public static final int FIELD_WIDTH = 20;
     public static final int FIELD_HEIGHT = 20;
 
     private final int datatype = DATATYPE_ROOMINFO;
@@ -63,6 +62,7 @@ public class Room {
 
     /**
      * Adds player to this room
+     *
      * @param player Player to add
      * @return True if the player was added. False if error has occurred
      */
@@ -87,16 +87,15 @@ public class Room {
         if (players.remove(player)) {
             if (getPlayersCount() > 1) {
                 broadcast(gson.toJson(new PlayerDisconnectBroadcast(player.getId())));
-                if (status == STATUS_PLAYING){
+                if (status == STATUS_PLAYING) {
                     performingPlayerIndex %= PLAYERS_COUNT;
                     pid = players.get(performingPlayerIndex).getId();
                 }
                 broadcastRoomUpdate();
                 return null;
-            }
-            else {
+            } else {
                 broadcast(gson.toJson(new RoomDestructionBroadcast()));
-                if (players.get(0) != null)
+                if (getPlayersCount() == 1)
                     return players.get(0);
             }
         }
@@ -107,28 +106,30 @@ public class Room {
      * Broadcasts this room info to all players in this room
      */
     private void broadcastRoomUpdate() {
-        for (Player player: players) {
+        for (Player player : players) {
             player.sendString(gson.toJson(this));
         }
     }
 
     /**
      * Broadcasts data to all players in this room
+     *
      * @param data Data to broadcast
      */
     public void broadcast(String data) {
-        for (Player player: players) {
+        for (Player player : players) {
             player.sendString(data);
         }
     }
 
     /**
      * Start room!
+     *
      * @return True if room started. False if error has occurred
      */
     public boolean start() {
         if (status == STATUS_READY) {
-            for (Player player: players) {
+            for (Player player : players) {
                 if (!player.isReadyForGameStart()) {
                     broadcastRoomUpdate();
                     return false;
@@ -139,16 +140,22 @@ public class Room {
             pid = players.get(performingPlayerIndex).getId();
             broadcastRoomUpdate();
             field = new GameField(this, FIELD_HEIGHT, FIELD_WIDTH);
-            for (Player player: players) {
-                Node node =  new Node(null,
+            for (Player player : players) {
+                Point point = field.findRandomNullPoint();
+
+                player.setBeginX(point.x);
+                player.setBeginY(point.y);
+            }
+            for (Player player : players) {
+                Node node = new Node(null,
                         player.getId(),
                         START_TOWER_UNITS,
-                        Node.NODE_TOWER,
+                        NODE_TOWER,
                         player.getBeginX(),
                         player.getBeginY());
                 field.setNodeToPosition(player.getBeginX(), player.getBeginY(), node);
             }
-            field.addRandomBonuses(START_BONUS_COUNT);
+            field.addAndBroadcastRandomBonuses(START_BONUS_COUNT);
             return true;
         }
         broadcastRoomUpdate();
@@ -159,30 +166,18 @@ public class Room {
         return status;
     }
 
-    public void handlePlayersMove(Player player, Moves moves) {
+    public void acceptMove(Player player, Move move) {
         if (status == STATUS_PLAYING && field != null && pid.equals(player.getId())) {
-            field.setPossibleMoves(moves);
-            broadcast(gson.toJson(new PlayerMoveBroadcast(player.getId(), MOVE_TEMP, moves)));
-        }
-        else {
-            player.disconnectBadApi("Cannot handle move, or room is not playing");
-        }
-    }
-
-    public void acceptMove(Player player) {
-        if (status == STATUS_PLAYING && field != null && pid.equals(player.getId())) {
-            if (!field.acceptMove()) {
+            if (!field.acceptMove(player, move)) {
                 player.disconnectBadApi("Your are moving like an asshole");
                 return;
             }
-            broadcast(gson.toJson(new PlayerMoveBroadcast(player.getId(), MOVE_NORM, field.getPossibleMoves())));
             long lastPid = pid;
             performingPlayerIndex += 1;
             performingPlayerIndex %= PLAYERS_COUNT;
             pid = players.get(performingPlayerIndex).getId();
-            broadcast(gson.toJson(new MoveAcceptBroadcast(lastPid, pid)));
-        }
-        else {
+            broadcast(gson.toJson(new PlayerMoveBroadcast(lastPid, pid, move)));
+        } else {
             player.disconnectBadApi("Cannot accept. It is not your move.");
         }
     }

@@ -3,9 +3,6 @@ package com.cyclic.services.game;
 import com.cyclic.models.game.Player;
 import com.cyclic.models.game.Room;
 
-
-import java.util.HashSet;
-import java.util.TreeSet;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -50,7 +47,9 @@ public class RoomManager {
             return;
         Player lastPlayer = room.removePlayer(player);
         if (lastPlayer != null) {
-            findRoomForThisGuy(lastPlayer);
+            lastPlayer.setRoom(null);
+            lastPlayer.setReadyForGameStart(false);
+            //findRoomForThisGuy(lastPlayer);
         }
     }
 }

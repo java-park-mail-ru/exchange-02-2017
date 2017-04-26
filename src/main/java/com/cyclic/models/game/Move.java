@@ -1,17 +1,16 @@
-package com.cyclic.models.game.moves;
+package com.cyclic.models.game;
 
-import com.google.gson.annotations.Expose;
 
 /**
  * Created by serych on 03.04.17.
  */
-public class CreateMove {
+public class Move {
+    private Integer type;
     private Integer xfrom;
     private Integer yfrom;
     private Integer xto;
     private Integer yto;
     private Integer unitsCount;
-    @Expose
     private Integer parentUnitsCount;
 
     public Integer getXfrom() {
@@ -41,4 +40,5 @@ public class CreateMove {
     public void setParentUnitsCount(int parentUnitsCount) {
         this.parentUnitsCount = parentUnitsCount;
     }
+
 }

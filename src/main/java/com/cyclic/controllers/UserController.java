@@ -1,15 +1,15 @@
 package com.cyclic.controllers;
 
+import com.cyclic.models.Status;
+import com.cyclic.models.User;
+import com.cyclic.services.AccountService;
+import com.cyclic.services.AccountServiceDB;
+import com.cyclic.validators.Validator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
-import com.cyclic.models.User;
-import com.cyclic.models.Status;
-import com.cyclic.services.AccountService;
-import com.cyclic.services.AccountServiceDB;
-import com.cyclic.validators.Validator;
 
 import javax.servlet.http.HttpSession;
 import java.io.IOException;

@@ -16,7 +16,7 @@ public class Status {
     private final String status;
 
     @JsonCreator
-    public Status(@JsonProperty("status") String status){
+    public Status(@JsonProperty("status") String status) {
         this.status = status;
     }
 

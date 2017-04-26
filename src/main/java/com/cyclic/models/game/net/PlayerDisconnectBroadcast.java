@@ -1,6 +1,6 @@
 package com.cyclic.models.game.net;
 
-import static com.cyclic.controllers.WebSocketController.DATATYPE_PLAYER_DISCONNECT;
+import static com.cyclic.configs.Constants.DATATYPE_PLAYER_DISCONNECT;
 
 /**
  * Created by serych on 13.04.17.

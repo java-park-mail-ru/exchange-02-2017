@@ -14,19 +14,19 @@ import java.util.concurrent.ConcurrentHashMap;
 public class AuthorizedUsersService {
     private final ConcurrentHashMap<HttpSession, Long> authorizedUsers = new ConcurrentHashMap<>();
 
-    public void add(HttpSession httpSession, Long userId){
+    public void add(HttpSession httpSession, Long userId) {
         authorizedUsers.put(httpSession, userId);
 
     }
 
-    public void remove(HttpSession httpSession){
+    public void remove(HttpSession httpSession) {
         authorizedUsers.remove(httpSession);
     }
 
     @SuppressWarnings("unused")
-    public boolean isLogged(HttpSession httpSession){
+    public boolean isLogged(HttpSession httpSession) {
         return authorizedUsers.containsKey(httpSession);
     }
-    
+
 
 }

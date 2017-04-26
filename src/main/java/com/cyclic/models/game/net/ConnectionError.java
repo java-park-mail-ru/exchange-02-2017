@@ -1,6 +1,6 @@
 package com.cyclic.models.game.net;
 
-import static com.cyclic.controllers.WebSocketController.DATATYPE_ERROR;
+import static com.cyclic.configs.Constants.DATATYPE_ERROR;
 
 /**
  * Created by serych on 05.04.17.

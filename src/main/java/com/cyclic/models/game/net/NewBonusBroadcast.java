@@ -4,8 +4,7 @@ import com.cyclic.models.game.Bonus;
 
 import java.util.Vector;
 
-import static com.cyclic.controllers.WebSocketController.DATATYPE_NEWBONUS;
-import static com.cyclic.controllers.WebSocketController.DATATYPE_ROOMINFO;
+import static com.cyclic.configs.Constants.DATATYPE_NEWBONUS;
 
 /**
  * Created by serych on 05.04.17.

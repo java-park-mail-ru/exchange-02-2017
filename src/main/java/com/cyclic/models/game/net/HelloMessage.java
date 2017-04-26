@@ -1,6 +1,6 @@
 package com.cyclic.models.game.net;
 
-import static com.cyclic.controllers.WebSocketController.DATATYPE_HELLO;
+import static com.cyclic.configs.Constants.DATATYPE_HELLO;
 
 /**
  * Created by serych on 06.04.17.

@@ -7,8 +7,6 @@ import java.util.Vector;
  */
 public class Node {
 
-    public static final int NODE_TOWER = 0;
-    public static final int NODE_BONUS = 1;
 
     private Node parentNode;
     private Vector<Node> nextNodes;

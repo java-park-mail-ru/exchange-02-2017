@@ -1,5 +1,6 @@
 package com.cyclic.services;
 
+import com.cyclic.models.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DuplicateKeyException;
@@ -7,7 +8,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.cyclic.models.User;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,9 +24,18 @@ import java.util.Map;
 public class AccountServiceDB implements AccountService {
 
     final private JdbcTemplate template;
+    private final RowMapper<User> userMapper = (rs, num) -> {
+        final long id = rs.getInt("id");
+        final String login = rs.getString("login");
+        final String email = rs.getString("email");
+        final String password = rs.getString("password");
+        final String firstName = rs.getString("firstName");
+        final String lastName = rs.getString("lastName");
+        return new User(id, firstName, lastName, email, login, password);
+    };
 
     @Autowired
-    AccountServiceDB(JdbcTemplate template){
+    AccountServiceDB(JdbcTemplate template) {
         this.template = template;
     }
 
@@ -38,7 +47,7 @@ public class AccountServiceDB implements AccountService {
         try {
             template.update(query, newUser.getLogin(), newUser.getEmail(),
                     newUser.getPassword(), newUser.getFirstName(), newUser.getLastName());
-        } catch (DuplicateKeyException e){
+        } catch (DuplicateKeyException e) {
             return ERROR_DUPLICATE;
         }
         return OK;
@@ -51,8 +60,7 @@ public class AccountServiceDB implements AccountService {
 
         try {
             return template.queryForObject(query, userMapper, id);
-        }
-        catch (DataAccessException e){
+        } catch (DataAccessException e) {
             return null;
         }
     }
@@ -64,8 +72,7 @@ public class AccountServiceDB implements AccountService {
 
         try {
             return template.queryForObject(query, userMapper, login);
-        }
-        catch (DataAccessException e){
+        } catch (DataAccessException e) {
             return null;
         }
     }
@@ -77,8 +84,7 @@ public class AccountServiceDB implements AccountService {
 
         try {
             return template.queryForObject(query, userMapper, email);
-        }
-        catch (DataAccessException e){
+        } catch (DataAccessException e) {
             return null;
         }
     }
@@ -90,10 +96,10 @@ public class AccountServiceDB implements AccountService {
                 .toString();
         try {
             template.update(query, updatedUser.getLogin(), updatedUser.getEmail(),
-                updatedUser.getPassword(), updatedUser.getFirstName(), updatedUser.getLastName(), updatedUser.getId());
-        } catch (DuplicateKeyException e){
+                    updatedUser.getPassword(), updatedUser.getFirstName(), updatedUser.getLastName(), updatedUser.getId());
+        } catch (DuplicateKeyException e) {
             return ERROR_DUPLICATE;
-        } catch (DataAccessException e){
+        } catch (DataAccessException e) {
             return ERROR_UNDEFINED;
         }
         return OK;
@@ -110,17 +116,17 @@ public class AccountServiceDB implements AccountService {
         List<Map<String, Object>> rows;
         try {
             rows = template.queryForList(query, limit, offset);
-        } catch (DataAccessException e){
+        } catch (DataAccessException e) {
             return null;
         }
         List<User> users = new ArrayList<>();
 
         for (Map<String, Object> row : rows) {
             String firstName = null;
-            if(row.get("firstName")!=null)
+            if (row.get("firstName") != null)
                 firstName = row.get("firstName").toString();
             String lastName = null;
-            if(row.get("lastName")!=null)
+            if (row.get("lastName") != null)
                 lastName = row.get("lastName").toString();
             users.add(new User(
                             Long.parseLong(row.get("id").toString()), firstName,
@@ -132,14 +138,4 @@ public class AccountServiceDB implements AccountService {
         return users;
     }
 
-    private final RowMapper<User> userMapper = (rs, num) -> {
-        final long id = rs.getInt("id");
-        final String login = rs.getString("login");
-        final String email = rs.getString("email");
-        final String password = rs.getString("password");
-        final String firstName = rs.getString("firstName");
-        final String lastName = rs.getString("lastName");
-        return new User(id, firstName, lastName, email, login, password);
-    };
-    
 }

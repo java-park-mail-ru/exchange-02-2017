@@ -1,25 +1,23 @@
 package com.cyclic.models.game.net;
 
-import com.cyclic.models.game.Moves;
+import com.cyclic.models.game.Move;
 
-import static com.cyclic.controllers.WebSocketController.DATATYPE_PLAYERMOVE;
+import static com.cyclic.configs.Constants.DATATYPE_PLAYERMOVE;
 
 /**
  * Created by serych on 03.04.17.
  */
 public class PlayerMoveBroadcast {
-    public static final int MOVE_TEMP = 0;
-    public static final int MOVE_NORM = 1;
 
     private final int datatype = DATATYPE_PLAYERMOVE;
 
     private long playerid;
-    private int type;
-    private Moves moves;
+    private long nextid;
+    private Move move;
 
-    public PlayerMoveBroadcast(long playerid, int type, Moves moves) {
+    public PlayerMoveBroadcast(long playerid, long nextid, Move move) {
         this.playerid = playerid;
-        this.type = type;
-        this.moves = moves;
+        this.nextid = nextid;
+        this.move = move;
     }
 }

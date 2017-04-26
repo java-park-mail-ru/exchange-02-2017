@@ -16,10 +16,6 @@ import static com.cyclic.models.game.Room.PLAYERS_COUNT;
 @SuppressWarnings({"DefaultFileTemplate", "SpringFacetCodeInspection", "WeakerAccess"})
 @SpringBootApplication
 public class Application {
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
     public static void main(String[] args) throws Exception {
         if (!validateConstants())
             throw new Exception("Please check constants before starting the server!");
@@ -30,6 +26,11 @@ public class Application {
         if (PLAYERS_COUNT <= 1)
             return false;
         return true;
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 }
 
