@@ -42,7 +42,7 @@ public class Room {
     public Room(long roomID) {
         status = STATUS_CREATING;
         players = new Vector<>(PLAYERS_COUNT);
-        field = null;
+        field = new GameField(this, FIELD_HEIGHT, FIELD_WIDTH);
         gson = new GsonBuilder().create();
         this.roomID = roomID;
         pid = null;
@@ -72,6 +72,9 @@ public class Room {
         // TODO: Link webSocket session and HTTP session and give normal nickname
         player.setRoom(this);
         players.add(player);
+        Point point = field.findRandomNullPoint();
+        player.setBeginX(point.x);
+        player.setBeginY(point.y);
         if (players.size() == PLAYERS_COUNT) {
             status = STATUS_READY;
         }
@@ -139,13 +142,6 @@ public class Room {
             performingPlayerIndex = ThreadLocalRandom.current().nextInt(0, Room.PLAYERS_COUNT);
             pid = players.get(performingPlayerIndex).getId();
             broadcastRoomUpdate();
-            field = new GameField(this, FIELD_HEIGHT, FIELD_WIDTH);
-            for (Player player : players) {
-                Point point = field.findRandomNullPoint();
-
-                player.setBeginX(point.x);
-                player.setBeginY(point.y);
-            }
             for (Player player : players) {
                 Node node = new Node(null,
                         player.getId(),
