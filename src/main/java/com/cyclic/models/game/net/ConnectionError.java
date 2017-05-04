@@ -7,9 +7,6 @@ import static com.cyclic.configs.Constants.DATATYPE_ERROR;
  */
 public class ConnectionError {
 
-    public static final int DISCONNECT_REASON_API_HACKER = 1;
-    public static final int DISCONNECT_REASON_NOT_LOGINED = 1;
-
     private final int datatype = DATATYPE_ERROR;
     private int code;
     private String reason;

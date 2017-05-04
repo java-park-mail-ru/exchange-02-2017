@@ -9,7 +9,7 @@ import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
 
-import static com.cyclic.models.game.net.ConnectionError.DISCONNECT_REASON_API_HACKER;
+import static com.cyclic.configs.Constants.DISCONNECT_REASON_API_HACKER;
 
 /**
  * Created by serych on 01.04.17.
@@ -18,7 +18,8 @@ public class Player {
 
     private String nickname;
     private long id;
-    private long units = Room.START_TOWER_UNITS;
+    // TODO: assoicate units with room
+    private long units;
     private int beginX = 0;
     private int beginY = 0;
     private transient Room room = null;

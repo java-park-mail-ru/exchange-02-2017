@@ -13,6 +13,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -20,7 +21,7 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import static com.cyclic.configs.Constants.*;
 
-
+@Service
 public class WebSocketController extends TextWebSocketHandler {
 
     private RoomManager roomManager;
@@ -30,9 +31,9 @@ public class WebSocketController extends TextWebSocketHandler {
     private AccountServiceDB accountService;
 
     @Autowired
-    public WebSocketController(AccountServiceDB accountService) {
+    public WebSocketController(RoomManager roomManager, AccountServiceDB accountService) {
+        this.roomManager = roomManager;
         this.accountService = accountService;
-        roomManager = new RoomManager();
         playerManager = new PlayerManager();
         gson = new GsonBuilder().create();
     }
@@ -56,12 +57,11 @@ public class WebSocketController extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-        //TODO: uncomment this, test and add to production when frontend will be ready
         final Long id = (Long) session.getAttributes().get("userId");
         User user = accountService.getUserById(id);
         if (user == null) {
             LOG.errorConsole("Unlogined user try to play");
-            session.sendMessage(new TextMessage(gson.toJson(new ConnectionError(ConnectionError.DISCONNECT_REASON_NOT_LOGINED, ""))));
+            session.sendMessage(new TextMessage(gson.toJson(new ConnectionError(DISCONNECT_REASON_NOT_LOGINED, ""))));
             session.close();
             return;
         }
@@ -104,7 +104,7 @@ public class WebSocketController extends TextWebSocketHandler {
                     break;
                 case ACTION_GAME_MOVE:
                     if (player.getRoom() == null)
-                        player.disconnectBadApi("You move without answer");
+                        player.disconnectBadApi("You move while not in the room");
                     player.getRoom().acceptMove(player, webSocketAnswer.getMove());
                     break;
                 default:

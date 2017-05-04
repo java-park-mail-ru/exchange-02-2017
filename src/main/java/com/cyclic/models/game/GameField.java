@@ -61,7 +61,7 @@ public class GameField {
                 return;
             Node node = new Node(null,
                     0,
-                    ThreadLocalRandom.current().nextInt(Room.BONUS_MIN_VALUE, Room.BONUS_MAX_VALUE + 1),
+                    ThreadLocalRandom.current().nextInt(room.getBonusMinValue(), room.getBonusMaxValue() + 1),
                     NODE_BONUS, point.x, point.y
             );
             world[point.y][point.x] = node;

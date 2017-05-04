@@ -4,7 +4,6 @@ import com.cyclic.models.Status;
 import com.cyclic.models.User;
 import com.cyclic.services.AccountService;
 import com.cyclic.services.AccountServiceDB;
-import com.cyclic.services.AuthorizedUsersService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,20 +24,18 @@ import javax.servlet.http.HttpSession;
         maxAge = 3600,
         allowedHeaders = {"Content-Type", "Origin", "X-Requested-With", "Accept"},
         allowCredentials = "true",
-        origins = {"http://localhost:3000", "https://cyclic-front.herokuapp.com", "http://172.20.10.2:3000", "http://172.20.10.2:3000"}
+        origins = {"http://localhost:3000", "https://cyclic-front.herokuapp.com", "http://172.16.84.7:3000", "http://172.20.10.2:3000"}
 )
 @RequestMapping(path = "/api/login")
 public class AuthController {
 
     private final AccountService accountService;
-    private final AuthorizedUsersService authorizationService;
     private final PasswordEncoder passwordEncoder;
 
     @Autowired
-    public AuthController(AccountServiceDB accountService, AuthorizedUsersService authorizationService,
+    public AuthController(AccountServiceDB accountService,
                           PasswordEncoder passwordEncoder){
         this.accountService = accountService;
-        this.authorizationService = authorizationService;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -61,7 +58,7 @@ public class AuthController {
         }
 
         httpSession.setAttribute("userId", user.getId());
-        authorizationService.add(httpSession, user.getId());
+        //authorizationService.add(httpSession, user.getId());
 
         return ResponseEntity.ok(new Status("success login"));
     }
@@ -72,7 +69,7 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new Status("user not authorized"));
         }
         httpSession.removeAttribute("userId");
-        authorizationService.remove(httpSession);
+        //authorizationService.remove(httpSession);
 
         return ResponseEntity.ok(new Status("success exited"));
     }

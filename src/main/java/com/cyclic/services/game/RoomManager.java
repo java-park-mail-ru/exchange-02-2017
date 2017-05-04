@@ -1,7 +1,10 @@
 package com.cyclic.services.game;
 
+import com.cyclic.configs.ResourceManager;
 import com.cyclic.models.game.Player;
 import com.cyclic.models.game.Room;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
@@ -9,12 +12,17 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Created by serych on 02.04.17.
  */
+@Service
 public class RoomManager {
     private ConcurrentHashMap<Player, Room> allRooms;
     private Vector<Room> freeRooms;
     private long lastRoomId = 0;
 
-    public RoomManager() {
+    private ResourceManager resourceManager;
+
+    @Autowired
+    public RoomManager(ResourceManager resourceManager) {
+        this.resourceManager = resourceManager;
         allRooms = new ConcurrentHashMap<>();
         freeRooms = new Vector<>();
     }
@@ -29,7 +37,7 @@ public class RoomManager {
             return;
         }
         if (freeRooms.isEmpty()) {
-            Room newRoom = new Room(lastRoomId);
+            Room newRoom = new Room(lastRoomId, resourceManager.getRoomConfig());
             lastRoomId++;
             freeRooms.add(newRoom);
         }

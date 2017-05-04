@@ -14,12 +14,16 @@ import org.springframework.web.socket.server.support.HttpSessionHandshakeInterce
 @EnableWebSocket
 public class WebSocketServerConfiguration implements WebSocketConfigurer {
 
-    @Autowired
-    private AccountServiceDB accountService;
+
+    private final WebSocketController webSocketController;
+
+    public WebSocketServerConfiguration(WebSocketController webSocketController) {
+        this.webSocketController = webSocketController;
+    }
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(new WebSocketController(accountService), "/game")
+        registry.addHandler(webSocketController, "/game")
                 .addInterceptors(new HttpSessionHandshakeInterceptor())
                 .setAllowedOrigins("*");
     }
