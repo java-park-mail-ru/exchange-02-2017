@@ -83,7 +83,11 @@ public class Room {
         Point point = field.findRandomNullPoint();
         player.setBeginX(point.x);
         player.setBeginY(point.y);
-        field.setNodeToPosition(point.x,point.y, new Node(null, player.getId(), startTowerUnits, NODE_TOWER, point.x,point.y));
+        player.setUnits(startTowerUnits);
+        Node mainNode = new Node(null, player.getId(), startTowerUnits, NODE_TOWER, point.x,point.y);
+        field.setNodeToPosition(point.x,point.y, mainNode);
+        player.setMainNode(mainNode);
+        player.getNodesMap().put(mainNode, null);
         if (players.size() == playersCount) {
             status = Constants.STATUS_FULL_SMB_NOT_READY;
         }
@@ -97,6 +101,9 @@ public class Room {
      */
     public Player removePlayer(Player player) {
         if (players.remove(player)) {
+            for (Node node : player.getNodesMap().keySet()) {
+                field.removeNode(node);
+            }
             if (getPlayersCount() > 1) {
                 broadcast(gson.toJson(new PlayerDisconnectBroadcast(player.getId())));
                 if (status == Constants.STATUS_PLAYING) {
@@ -173,7 +180,8 @@ public class Room {
 
     public void acceptMove(Player player, Move move) {
         if (status == Constants.STATUS_PLAYING && field != null && pid.equals(player.getId())) {
-            if (!field.acceptMove(player, move)) {
+            field.acceptMove(move);
+            if (move.getType() == Move.MoveType.ACCEPT_FAIL) {
                 player.disconnectBadApi("Your are moving like an asshole");
                 return;
             }
@@ -221,5 +229,13 @@ public class Room {
 
     public long getRoomID() {
         return roomID;
+    }
+
+    public Player getPlayer(long id) {
+        for (Player player : players) {
+            if (player.getId() == id)
+                return player;
+        }
+        return null;
     }
 }

@@ -1,4 +1,4 @@
-package com.cyclic.models;
+package com.cyclic.models.base;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;

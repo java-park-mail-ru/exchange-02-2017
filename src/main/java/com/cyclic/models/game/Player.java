@@ -8,6 +8,9 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Vector;
 
 import static com.cyclic.configs.Constants.DISCONNECT_REASON_API_HACKER;
 
@@ -25,21 +28,21 @@ public class Player {
     private transient Room room = null;
     private transient WebSocketSession webSocketSession;
     private transient Gson gson;
+    private transient Node mainNode;
+    private transient HashMap<Node, HashSet<Node>> nodesMap;
     private boolean readyForGameStart = false;
+
 
     public Player(WebSocketSession webSocketSession, String nickname, long id) {
         this.webSocketSession = webSocketSession;
         this.gson = new GsonBuilder().create();
         this.nickname = nickname;
         this.id = id;
+        this.nodesMap = new HashMap<>();
     }
 
     public String getNickname() {
         return nickname;
-    }
-
-    public void setNickname(String nickname) {
-        this.nickname = nickname;
     }
 
     public long getId() {
@@ -74,10 +77,6 @@ public class Player {
         return webSocketSession;
     }
 
-    public void setWebSocketSession(WebSocketSession webSocketSession) {
-        this.webSocketSession = webSocketSession;
-    }
-
     public boolean isReadyForGameStart() {
         return readyForGameStart;
     }
@@ -98,11 +97,6 @@ public class Player {
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    public void disconnectBadApi() {
-        LOG.errorConsole(nickname + " is hacker! Ip: " + getWebSocketSession().getRemoteAddress() + ". Kick him!");
-        disconnect(DISCONNECT_REASON_API_HACKER, "");
     }
 
     public void disconnectBadApi(String reason) {
@@ -129,5 +123,17 @@ public class Player {
 
     public void setBeginY(int beginY) {
         this.beginY = beginY;
+    }
+
+    public void setMainNode(Node mainNode) {
+        this.mainNode = mainNode;
+    }
+
+    public Node getMainNode() {
+        return mainNode;
+    }
+
+    public HashMap<Node, HashSet<Node>> getNodesMap() {
+        return nodesMap;
     }
 }

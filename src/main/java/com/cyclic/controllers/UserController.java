@@ -1,7 +1,7 @@
 package com.cyclic.controllers;
 
-import com.cyclic.models.Status;
-import com.cyclic.models.User;
+import com.cyclic.models.base.Status;
+import com.cyclic.models.base.User;
 import com.cyclic.services.AccountService;
 import com.cyclic.services.AccountServiceDB;
 import com.cyclic.validators.Validator;

@@ -1,6 +1,6 @@
 package com.cyclic.services;
 
-import com.cyclic.models.User;
+import com.cyclic.models.base.User;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

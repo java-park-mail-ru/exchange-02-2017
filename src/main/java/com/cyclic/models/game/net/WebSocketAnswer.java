@@ -1,4 +1,4 @@
-package com.cyclic.models;
+package com.cyclic.models.game.net;
 
 import com.cyclic.models.game.Move;
 

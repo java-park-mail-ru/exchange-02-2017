@@ -7,9 +7,7 @@ import java.util.Vector;
  */
 public class Node {
 
-
-    private Node parentNode;
-    private Vector<Node> nextNodes;
+    private Vector<Node> linkedNodes;
     private long playerID;
     private int value;
     private int type;
@@ -17,9 +15,9 @@ public class Node {
     private int y;
 
     public Node(Node parentNode, long playerID, int value, int type, int x, int y) {
-        this.parentNode = parentNode;
+        this.linkedNodes = new Vector<>();
+        linkedNodes.add(parentNode);
         this.value = value;
-        this.nextNodes = new Vector<>();
         this.playerID = playerID;
         this.type = type;
         this.x = x;
@@ -27,23 +25,15 @@ public class Node {
     }
 
     public void addChild(Node node) {
-        nextNodes.add(node);
+        linkedNodes.add(node);
     }
 
-    public Node getParentNode() {
-        return parentNode;
+    public Vector<Node> getLinkedNodes() {
+        return linkedNodes;
     }
 
-    public void setParentNode(Node parentNode) {
-        this.parentNode = parentNode;
-    }
-
-    public Vector<Node> getNextNodes() {
-        return nextNodes;
-    }
-
-    public void setNextNodes(Vector<Node> nextNodes) {
-        this.nextNodes = nextNodes;
+    public void setLinkedNodes(Vector<Node> linkedNodes) {
+        this.linkedNodes = linkedNodes;
     }
 
     public long getPlayerID() {

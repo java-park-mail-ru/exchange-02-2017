@@ -1,8 +1,8 @@
 package com.cyclic.controllers;
 
-import com.cyclic.models.Status;
-import com.cyclic.models.User;
-import com.cyclic.models.UserView;
+import com.cyclic.models.base.Status;
+import com.cyclic.models.base.User;
+import com.cyclic.models.base.UserView;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Test;
@@ -14,12 +14,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.*;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Random;
 
 import static org.junit.Assert.*;
-import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.NONE;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 /**

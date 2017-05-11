@@ -1,8 +1,8 @@
 package com.cyclic.controllers;
 
 import com.cyclic.LOG;
-import com.cyclic.models.User;
-import com.cyclic.models.WebSocketAnswer;
+import com.cyclic.models.base.User;
+import com.cyclic.models.game.net.WebSocketAnswer;
 import com.cyclic.models.game.Player;
 import com.cyclic.models.game.net.ConnectionError;
 import com.cyclic.models.game.net.HelloMessage;

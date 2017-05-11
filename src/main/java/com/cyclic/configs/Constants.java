@@ -19,9 +19,6 @@ public class Constants {
     public static final int ACTION_READY_FOR_GAME_START = 2;
     public static final int ACTION_GAME_MOVE = 3;
 
-    // MOVE types
-    public static final int MOVE_SIMPLE = 0;
-
     // NODE types
     public static final int NODE_TOWER = 0;
     public static final int NODE_BONUS = 1;

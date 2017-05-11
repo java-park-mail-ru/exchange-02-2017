@@ -1,23 +1,34 @@
 package com.cyclic.models.game;
 
 
+import java.util.Vector;
+
 /**
  * Created by serych on 03.04.17.
  */
 public class Move {
-    private Integer type;
+    private MoveType type;
     private Integer xfrom;
     private Integer yfrom;
     private Integer xto;
     private Integer yto;
     private Integer unitsCount;
     private Integer parentUnitsCount;
+    private Vector<Node> deletedNodes;
 
-    public Integer getType() {
+    public Vector<Node> getDeletedNodes() {
+        return deletedNodes;
+    }
+
+    public void setDeletedNodes(Vector<Node> deletedNodes) {
+        this.deletedNodes = deletedNodes;
+    }
+
+    public MoveType getType() {
         return type;
     }
 
-    public void setType(Integer type) {
+    public void setType(MoveType type) {
         this.type = type;
     }
 
@@ -67,5 +78,12 @@ public class Move {
 
     public void setParentUnitsCount(Integer parentUnitsCount) {
         this.parentUnitsCount = parentUnitsCount;
+    }
+
+    public static enum MoveType {
+        ACCEPT_OK,
+        ACCEPT_WIN,
+        ACCEPT_LOST,
+        ACCEPT_FAIL
     }
 }

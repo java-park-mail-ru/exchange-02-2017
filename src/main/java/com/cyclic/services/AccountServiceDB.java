@@ -1,6 +1,6 @@
 package com.cyclic.services;
 
-import com.cyclic.models.User;
+import com.cyclic.models.base.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DuplicateKeyException;
