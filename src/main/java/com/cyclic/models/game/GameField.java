@@ -199,7 +199,7 @@ public class GameField {
         Node my = getByPosition(move.getXfrom(), move.getYfrom());
         Node target = getByPosition(move.getXto(), move.getYto());
 
-        if (my != null && checkTurn(my)) {
+        if (checkTurn(my)) {
             if(target == null) {
                 playerMoveFree(my, move);
             }
@@ -217,7 +217,8 @@ public class GameField {
             }
             move.setParentUnitsCount(my.getValue());
         }
-
-        move.setType(Move.MoveType.ACCEPT_FAIL);
+        else {
+            move.setType(Move.MoveType.ACCEPT_FAIL);
+        }
     }
 }
