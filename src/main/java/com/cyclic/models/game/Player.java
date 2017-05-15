@@ -1,7 +1,9 @@
 package com.cyclic.models.game;
 
 import com.cyclic.LOG;
-import com.cyclic.models.game.net.ConnectionError;
+import com.cyclic.configs.Enums;
+import com.cyclic.models.game.net.toclient.ConnectionError;
+import com.cyclic.models.game.net.toclient.RNode;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.springframework.web.socket.TextMessage;
@@ -12,7 +14,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Vector;
 
-import static com.cyclic.configs.Constants.DISCONNECT_REASON_API_HACKER;
+import static com.cyclic.configs.Enums.DisconnectReason.DISCONNECT_REASON_API_HACKER;
 
 /**
  * Created by serych on 01.04.17.
@@ -21,7 +23,6 @@ public class Player {
 
     private String nickname;
     private long id;
-    // TODO: assoicate units with room
     private long units;
     private int beginX = 0;
     private int beginY = 0;
@@ -73,6 +74,10 @@ public class Player {
         }
     }
 
+    public void sendDatatype(String datatype) {
+        sendString("{datatype:" + datatype + "}");
+    }
+
     public WebSocketSession getWebSocketSession() {
         return webSocketSession;
     }
@@ -90,7 +95,7 @@ public class Player {
             room.start();
     }
 
-    public void disconnect(int code, String data) {
+    public void disconnect(Enums.DisconnectReason code, String data) {
         sendString(gson.toJson(new ConnectionError(code, data)));
         try {
             webSocketSession.close();
@@ -125,15 +130,31 @@ public class Player {
         this.beginY = beginY;
     }
 
-    public void setMainNode(Node mainNode) {
-        this.mainNode = mainNode;
-    }
-
     public Node getMainNode() {
         return mainNode;
     }
 
+    public void setMainNode(Node mainNode) {
+        this.mainNode = mainNode;
+    }
+
     public HashMap<Node, HashSet<Node>> getNodesMap() {
         return nodesMap;
+    }
+
+    public Vector<Node> getNodes() {
+        Vector<Node> vector = new Vector<>();
+        nodesMap.forEach((node, nodes) -> {
+            vector.add(node);
+        });
+        return vector;
+    }
+
+    public Vector<RNode> getReducedNodes() {
+        Vector<RNode> vector = new Vector<>();
+        nodesMap.forEach((node, nodes) -> {
+            vector.add(node.getReduced());
+        });
+        return vector;
     }
 }

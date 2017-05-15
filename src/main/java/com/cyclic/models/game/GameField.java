@@ -1,23 +1,25 @@
 package com.cyclic.models.game;
 
-import com.cyclic.models.game.net.NewBonusBroadcast;
+import com.cyclic.models.game.net.broadcast.MoveBroadcast;
+import com.cyclic.models.game.net.broadcast.NewBonusBroadcast;
+import com.cyclic.models.game.net.fromclient.Move;
+import com.cyclic.models.game.net.toclient.RNode;
+import com.sun.istack.internal.Nullable;
 
 import java.awt.*;
-import java.util.Random;
-import java.util.Vector;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
-import static com.cyclic.configs.Constants.NODE_BONUS;
-import static com.cyclic.configs.Constants.NODE_TOWER;
+import static com.cyclic.configs.Enums.MoveResult.*;
 
 /**
  * Created by serych on 03.04.17.
  */
 public class GameField {
+    private final static Random randomDelta = new Random(); // TODO check
     private transient int height, width;
     private transient Node[][] world;
     private transient Room room;
-
 
     public GameField(Room room, int height, int width) {
         this.room = room;
@@ -28,7 +30,7 @@ public class GameField {
             }
         }
         this.height = height;
-        this.width  = width;
+        this.width = width;
 
     }
 
@@ -43,18 +45,18 @@ public class GameField {
     }
 
     public void addAndBroadcastRandomBonuses(int count) {
-        Vector<Bonus> bonuses = new Vector<>();
+        Vector<Node> bonuses = new Vector<>();
         for (int i = 0; i < count; i++) {
             Point point = findRandomNullPoint();
             if (point == null)
                 return;
-            Node node = new Node(null,
-                    0,
+            Node node = new Node(
                     ThreadLocalRandom.current().nextInt(room.getBonusMinValue(), room.getBonusMaxValue() + 1),
-                    NODE_BONUS, point.x, point.y
+                    point.x,
+                    point.y
             );
             world[point.y][point.x] = node;
-            bonuses.add(new Bonus(point.x, point.y, node.getValue()));
+            bonuses.add(node);
         }
         room.broadcast(room.getGson().toJson(new NewBonusBroadcast(bonuses)));
     }
@@ -95,55 +97,79 @@ public class GameField {
         return node != null && node.getPlayerID() == room.getPid();
     }
 
-    private void addNewTower(Node parentNode, Long pid, int unitsCount, int x, int y) {
-        setNodeToPosition(x, y, new Node(
-                parentNode,
-                pid,
+    /**
+     * This method need garant that user did not have new node and had parentNode!!!
+     */
+
+    private Node addNewTower(Node parentNode, Player player, int unitsCount, Move move) {
+        int x = move.getXto();
+        int y = move.getYto();
+        Node node = new Node(
+                player.getId(),
                 unitsCount,
-                NODE_TOWER,
-                x, y));
+                x, y);
+        HashMap<Node, HashSet<Node>> nodesMap = player.getNodesMap();
+        nodesMap.get(parentNode).add(node);
+        HashSet<Node> hashSet = new HashSet<>();
+        hashSet.add(parentNode);
+        nodesMap.put(node, hashSet);
+        setNodeToPosition(x, y, node);
+        return node;
     }
 
-    private void addNewTower(Node parentNode, Long pid, int unitsCount, Move move) {
-        addNewTower(parentNode, pid, unitsCount, move.getXto(), move.getXto());
-    }
-
-    private void playerMoveFree(Node fromNode, Move move) {
+    private MoveBroadcast playerMoveFree(Player player, Node fromNode, Move move) {
         int moveUnits = move.getUnitsCount();
-        if (moveUnits < 1 || moveUnits >= fromNode.getValue()) {
-            move.setType(Move.MoveType.ACCEPT_FAIL);
-            return;
+        if (!(moveUnits >= 1 && moveUnits < fromNode.getValue())) {
+            return null;
         }
         fromNode.addToValue(-moveUnits);
 
-        addNewTower(fromNode, fromNode.getPlayerID(), moveUnits, move);
-        move.setParentUnitsCount(fromNode.getValue());
-        move.setType(Move.MoveType.ACCEPT_OK);
+        Node newNode = addNewTower(fromNode, player, moveUnits, move);
+
+        MoveBroadcast moveBroadcast = new MoveBroadcast();
+        moveBroadcast.setResult(ACCEPT_OK);
+        moveBroadcast.addNewNode(newNode);
+        moveBroadcast.addValueUpdate(fromNode);
+
+        return moveBroadcast;
     }
 
-    private void playerMoveBonus(Node fromNode, Node bonus, Move move) {
+    private MoveBroadcast playerMoveBonus(Player player, Node fromNode, Node bonus, Move move) {
         int moveUnits = move.getUnitsCount();
         fromNode.addToValue(-moveUnits);
         moveUnits += bonus.getValue();
 
-        /* rewrite bonus */
-        addNewTower(fromNode, fromNode.getPlayerID(),
-                moveUnits, bonus.getX(), bonus.getY());
+        Node newNode = addNewTower(fromNode, player,
+                moveUnits, move);
 
-        move.setType(Move.MoveType.ACCEPT_OK);
+
+        MoveBroadcast moveBroadcast = new MoveBroadcast();
+        moveBroadcast.setResult(ACCEPT_OK);
+        moveBroadcast.addNewNode(newNode);
+        moveBroadcast.addRemovedNode(newNode.getReduced());
+        moveBroadcast.addValueUpdate(fromNode);
+
+        return moveBroadcast;
     }
 
-    private void playerMoveLink(Node fromNode, Node toNode, Move move) {
+    private MoveBroadcast playerMoveLink(Player player, Node fromNode, Node toNode, Move move) {
         int moveUnits = move.getUnitsCount();
         fromNode.addToValue(-moveUnits);
+        toNode.addToValue(moveUnits);
 
-        addNewTower(fromNode, fromNode.getPlayerID(), moveUnits, move);
-        move.setParentUnitsCount(fromNode.getValue());
-        move.setType(Move.MoveType.ACCEPT_OK);
+        HashMap<Node, HashSet<Node>> nodesMap = player.getNodesMap();
+        nodesMap.get(fromNode).add(toNode);
+        nodesMap.get(toNode).add(fromNode);
+
+        MoveBroadcast moveBroadcast = new MoveBroadcast();
+        moveBroadcast.setResult(ACCEPT_OK);
+        moveBroadcast.addNewLink(fromNode, toNode);
+        moveBroadcast.addValueUpdate(fromNode);
+
+        return moveBroadcast;
     }
 
-    private final static Random randomDelta = new Random(); // TODO check
-    private void playerMoveAttack(Node fromNode, Node enemyNode, Move move) {
+    private MoveBroadcast playerMoveAttack(Player player, Node fromNode, Node enemyNode, Move move) {
         int moveUnits = move.getUnitsCount();
         fromNode.addToValue(-moveUnits);
 
@@ -154,36 +180,98 @@ public class GameField {
          *  delta > 0 ~ enemy win
          */
 
-        if(delta == 0) {
+        if (delta == 0) {
             delta = (randomDelta.nextInt(1)) == 0 ? 1 : -1;
         }
 
-        if(delta > 0) {
-            killNode(fromNode);
+        MoveBroadcast moveBroadcast = new MoveBroadcast();
+
+        Vector<RNode> deletedNodes;
+        if (delta > 0) {
+            deletedNodes = killNode(fromNode);
             enemyNode.addToValue(-moveUnits);
-            move.setType(Move.MoveType.ACCEPT_LOST);
+            moveBroadcast.addValueUpdate(enemyNode);
+            moveBroadcast.setResult(ACCEPT_LOSE);
         } else {
-            killNode(enemyNode);
+            deletedNodes = killNode(enemyNode);
             fromNode.addToValue(-moveUnits);
-            move.setType(Move.MoveType.ACCEPT_WIN);
+            moveBroadcast.addValueUpdate(fromNode);
+            moveBroadcast.setResult(ACCEPT_WIN);
         }
+
+        moveBroadcast.setRemovedNodes(deletedNodes);
+
+        return moveBroadcast;
     }
 
-    public void killNode(Node node) {
+    public Vector<RNode> killNode(Node node) {
         if (node == null)
-            return;
-        if (node.getType() == NODE_BONUS) {
-            world[node.getY()][node.getX()] = null;
-        }
-        if (node.getType() == NODE_TOWER) {
+            return null;
+        world[node.getY()][node.getX()] = null;
+        if (node.isBonus()) {
+            Vector<RNode> deleteNodes = new Vector<>();
+            deleteNodes.add(node.getReduced());
+            return deleteNodes;
+        } else {
             Player player = room.getPlayer(node.getPlayerID());
+
+            // If killed main player's node
+            // Remove player from game
             if (player.getMainNode() == node) {
                 room.removePlayer(player);
-                return;
+                Vector<Node> deleteNodes = player.getNodes();
+                deleteNodes.forEach(n -> {
+                    setNodeToPosition(n.getX(), n.getY(), null);
+                });
+                return player.getReducedNodes();
             }
-            for (Node testNode : player.getNodesMap().get(player.getMainNode())) {
+            HashMap<Node, HashSet<Node>> nodesMap = player.getNodesMap();
 
+            // remove THIS node from map
+            if (nodesMap.containsKey(node)) {
+                for (Node n : nodesMap.get(node)) {
+                    nodesMap.get(n).remove(node);
+                }
+                nodesMap.remove(node);
             }
+
+            // Create map of visited nodes in DFS
+            HashMap<Node, Boolean> visitedNodes = new HashMap<>();
+            nodesMap.keySet().forEach(n -> {
+                visitedNodes.put(n, false);
+            });
+            visitedNodes.put(player.getMainNode(), true);
+
+
+            // DFS
+            Stack<Node> s = new Stack<>();
+            s.push(player.getMainNode());
+            while (!s.empty()) {
+                Node v = s.pop();
+                for (Node n : nodesMap.get(v)) {
+                    if (!visitedNodes.get(n)) {
+                        s.push(n);
+                        visitedNodes.put(n, true);
+                    }
+                }
+            }
+            // DFS
+
+            // Now we have visitedNodes map. If node was not visited,
+            // remove it from world and add to returning array
+            Vector<RNode> deleteNodes = new Vector<>();
+            deleteNodes.add(node.getReduced());
+            visitedNodes.forEach((n, visited) -> {
+                if (!visited) {
+                    for (Node v : nodesMap.get(n)) {
+                        nodesMap.get(v).remove(n);
+                    }
+                    nodesMap.remove(n);
+                    deleteNodes.add(n.getReduced());
+                    setNodeToPosition(n.getX(), n.getY(), null);
+                }
+            });
+            return deleteNodes;
         }
     }
 
@@ -195,30 +283,24 @@ public class GameField {
         world[node.getY()][node.getX()] = null;
     }
 
-    public void acceptMove(Move move) {
+    @Nullable
+    public MoveBroadcast acceptMove(Player player, Move move) {
         Node my = getByPosition(move.getXfrom(), move.getYfrom());
         Node target = getByPosition(move.getXto(), move.getYto());
+        MoveBroadcast moveBroadcast = null;
 
         if (checkTurn(my)) {
-            if(target == null) {
-                playerMoveFree(my, move);
+            if (target == null) {
+                moveBroadcast = playerMoveFree(player, my, move);
+            } else if (checkTurn(target)) {
+                moveBroadcast = playerMoveLink(player, my, target, move);
+            } else {
+                if (target.isBonus())
+                    moveBroadcast = playerMoveBonus(player, my, target, move);
+                else
+                    moveBroadcast = playerMoveAttack(player, my, target, move);
             }
-            else if (checkTurn(target)) {
-                playerMoveLink(my, target, move);
-            }
-            else {
-                switch (target.getType()) {
-                    case NODE_TOWER:
-                        playerMoveAttack(my, target, move);
-                        break;
-                    case NODE_BONUS:
-                        playerMoveBonus(my, target, move);
-                }
-            }
-            move.setParentUnitsCount(my.getValue());
         }
-        else {
-            move.setType(Move.MoveType.ACCEPT_FAIL);
-        }
+        return moveBroadcast;
     }
 }

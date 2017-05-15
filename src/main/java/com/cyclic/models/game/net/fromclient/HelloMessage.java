@@ -1,12 +1,14 @@
-package com.cyclic.models.game.net;
+package com.cyclic.models.game.net.fromclient;
 
-import static com.cyclic.configs.Constants.DATATYPE_HELLO;
+import com.cyclic.configs.Enums;
+
+import static com.cyclic.configs.Enums.Datatype.DATATYPE_HELLO;
 
 /**
  * Created by serych on 06.04.17.
  */
 public class HelloMessage {
-    private final int datatype = DATATYPE_HELLO;
+    private final Enums.Datatype datatype = DATATYPE_HELLO;
     private String nickname;
     private long id;
 

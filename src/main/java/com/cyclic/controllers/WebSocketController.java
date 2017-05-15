@@ -2,10 +2,10 @@ package com.cyclic.controllers;
 
 import com.cyclic.LOG;
 import com.cyclic.models.base.User;
-import com.cyclic.models.game.net.WebSocketAnswer;
+import com.cyclic.models.game.net.fromclient.HelloMessage;
+import com.cyclic.models.game.net.fromclient.WebSocketAnswer;
 import com.cyclic.models.game.Player;
-import com.cyclic.models.game.net.ConnectionError;
-import com.cyclic.models.game.net.HelloMessage;
+import com.cyclic.models.game.net.toclient.ConnectionError;
 import com.cyclic.services.AccountServiceDB;
 import com.cyclic.services.game.PlayerManager;
 import com.cyclic.services.game.RoomManager;
@@ -19,7 +19,7 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
-import static com.cyclic.configs.Constants.*;
+import static com.cyclic.configs.Enums.DisconnectReason.DISCONNECT_REASON_NOT_LOGINED;
 
 @Service
 public class WebSocketController extends TextWebSocketHandler {
@@ -61,17 +61,12 @@ public class WebSocketController extends TextWebSocketHandler {
         User user = accountService.getUserById(id);
         if (user == null) {
             LOG.errorConsole("Unlogined user try to play");
-            session.sendMessage(new TextMessage(gson.toJson(new ConnectionError(DISCONNECT_REASON_NOT_LOGINED, ""))));
+            session.sendMessage(new TextMessage(gson.toJson(new ConnectionError(DISCONNECT_REASON_NOT_LOGINED, "You are not authorized!"))));
             session.close();
             return;
         }
-        //System.out.println(user.getLogin());
         Player player = new Player(session, user.getLogin(), user.getId());
         playerManager.createPlayer(session, player);
-//        Player player = new Player(session,
-//                "Nick" + ThreadLocalRandom.current().nextInt(0, 9999),
-//                ThreadLocalRandom.current().nextInt(0, 9999));
-//        playerManager.createPlayer(session, player);
         LOG.webSocketLog("New websocket connected. IP: " + session.getRemoteAddress() +
         ", Nick: " + player.getNickname());
         session.sendMessage(new TextMessage(gson.toJson(new HelloMessage(player.getNickname(), player.getId()))));
@@ -92,10 +87,10 @@ public class WebSocketController extends TextWebSocketHandler {
             Player player = playerManager.getPlayerForSession(session);
             if (player == null)
                 return;
-            if (webSocketAnswer.getActionCode() == null)
+            if (webSocketAnswer.getAction() == null)
                 player.disconnectBadApi("There is no actionCode!");
-            LOG.webSocketLog("Message from " + player.getNickname()+ " (Ip " + session.getRemoteAddress() + "). Code: " + webSocketAnswer.getActionCode());
-            switch (webSocketAnswer.getActionCode()) {
+            LOG.webSocketLog("Message from " + player.getNickname()+ " (Ip " + session.getRemoteAddress() + "). Code: " + webSocketAnswer.getAction());
+            switch (webSocketAnswer.getAction()) {
                 case ACTION_READY_FOR_ROOM_SEARCH:
                     roomManager.findRoomForThisGuy(player);
                     break;

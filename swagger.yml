@@ -77,18 +77,18 @@ paths:
           schema:
             $ref: '#/definitions/ApiResponse'
 
-  /user/{id}:
+  /user/{pid}:
    get:
       tags:
       - user
       summary: Получение данных
-      description: Получение данных пользователя по id
+      description: Получение данных пользователя по pid
       produces:
       - application/json
       parameters:
       - in: path
-        name: id
-        description: User id
+        name: pid
+        description: User pid
         required: true
         type: integer
         format: int64
@@ -144,7 +144,7 @@ definitions:
   User:
     type: object
     properties:
-      id:
+      pid:
         type: integer
         format: int64
         readOnly: true
@@ -163,7 +163,7 @@ definitions:
   UserView:
     type: object
     properties:
-      id:
+      pid:
         type: integer
         format: int64
         readOnly: true
