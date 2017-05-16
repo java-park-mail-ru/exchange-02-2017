@@ -2,9 +2,9 @@ package com.cyclic.controllers;
 
 import com.cyclic.LOG;
 import com.cyclic.models.base.User;
+import com.cyclic.models.game.Player;
 import com.cyclic.models.game.net.fromclient.HelloMessage;
 import com.cyclic.models.game.net.fromclient.WebSocketAnswer;
-import com.cyclic.models.game.Player;
 import com.cyclic.models.game.net.toclient.ConnectionError;
 import com.cyclic.services.AccountServiceDB;
 import com.cyclic.services.game.PlayerManager;
@@ -68,7 +68,7 @@ public class WebSocketController extends TextWebSocketHandler {
         Player player = new Player(session, user.getLogin(), user.getId());
         playerManager.createPlayer(session, player);
         LOG.webSocketLog("New websocket connected. IP: " + session.getRemoteAddress() +
-        ", Nick: " + player.getNickname());
+                ", Nick: " + player.getNickname());
         session.sendMessage(new TextMessage(gson.toJson(new HelloMessage(player.getNickname(), player.getId()))));
     }
 
@@ -78,9 +78,8 @@ public class WebSocketController extends TextWebSocketHandler {
         String message = jsonTextMessage.getPayload();
         WebSocketAnswer webSocketAnswer = null;
         try {
-             webSocketAnswer = new Gson().fromJson( message, WebSocketAnswer.class);
-        }
-        catch (JsonSyntaxException e) {
+            webSocketAnswer = new Gson().fromJson(message, WebSocketAnswer.class);
+        } catch (JsonSyntaxException e) {
             LOG.error(e);
         }
         if (webSocketAnswer != null) {
@@ -89,24 +88,30 @@ public class WebSocketController extends TextWebSocketHandler {
                 return;
             if (webSocketAnswer.getAction() == null)
                 player.disconnectBadApi("Bad actionCode");
-            LOG.webSocketLog("Message from " + player.getNickname()+ " (Ip " + session.getRemoteAddress() + "). Code: " + webSocketAnswer.getAction());
-            switch (webSocketAnswer.getAction()) {
-                case ACTION_READY_FOR_ROOM_SEARCH:
-                    roomManager.findRoomForThisGuy(player);
-                    break;
-                case ACTION_READY_FOR_GAME_START:
-                    player.setReadyForGameStart(true);
-                    break;
-                case ACTION_GAME_MOVE:
-                    if (player.getRoom() == null)
-                        player.disconnectBadApi("You move while not in the room");
-                    player.getRoom().acceptMove(player, webSocketAnswer.getMove());
-                    break;
-                default:
-                    player.disconnectBadApi("Unknown actionCode");
+            LOG.webSocketLog("Message from " + player.getNickname() + " (Ip " + session.getRemoteAddress() + "). Code: " + webSocketAnswer.getAction());
+            try {
+                switch (webSocketAnswer.getAction()) {
+                    case ACTION_READY_FOR_ROOM_SEARCH:
+                        roomManager.findRoomForThisGuy(player);
+                        break;
+                    case ACTION_READY_FOR_GAME_START:
+                        player.setReadyForGameStart(true);
+                        break;
+                    case ACTION_GAME_MOVE:
+                        if (player.getRoom() == null) {
+                            player.disconnectBadApi("You move while not in the room");
+                            break;
+                        }
+                        player.getRoom().acceptMove(player, webSocketAnswer.getMove());
+                        break;
+                    default:
+                        player.disconnectBadApi("Unknown actionCode");
+                }
             }
-        }
-        else {
+            catch (Exception e) {
+                LOG.errorConsole(e);
+            }
+        } else {
             session.close();
         }
     }

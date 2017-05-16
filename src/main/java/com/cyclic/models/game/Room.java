@@ -31,8 +31,8 @@ public class Room {
     private transient int startTowerUnits;
     private transient int bonusMinValue;
     private transient int bonusMaxValue;
-    private transient int fieldWidth;
-    private transient int fieldHeight;
+    private int fieldWidth;
+    private int fieldHeight;
     private Vector<Player> players;
     private Long pid;
     private Enums.RoomStatus status;

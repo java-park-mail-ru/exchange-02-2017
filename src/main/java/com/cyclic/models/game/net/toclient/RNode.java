@@ -1,6 +1,7 @@
 package com.cyclic.models.game.net.toclient;
 
 import com.cyclic.Application;
+import com.cyclic.services.game.RoomManager;
 
 /**
  * Created by serych on 12.05.17.
@@ -32,6 +33,6 @@ public class RNode {
 
     @Override
     public int hashCode() {
-        return x * (Application.resourceManager.getRoomConfig().getFieldHeight() + 1) + y;
+        return x * (RoomManager.resourceManager.getRoomConfig().getFieldHeight() + 1) + y;
     }
 }

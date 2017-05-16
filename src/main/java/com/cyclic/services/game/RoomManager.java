@@ -19,10 +19,11 @@ public class RoomManager {
     private Vector<Room> freeRooms;
     private long lastRoomId = 0;
 
-    private ResourceManager resourceManager;
+    public static ResourceManager resourceManager;
 
-    public RoomManager() {
-        this.resourceManager = Application.resourceManager;
+    @Autowired
+    public RoomManager(ResourceManager resourceManager) {
+        RoomManager.resourceManager = resourceManager;
         allRooms = new ConcurrentHashMap<>();
         freeRooms = new Vector<>();
     }

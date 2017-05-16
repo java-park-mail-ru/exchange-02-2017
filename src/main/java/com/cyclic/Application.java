@@ -22,9 +22,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @SpringBootApplication
 public class Application {
 
-    @Autowired
-    public static ResourceManager resourceManager;
-
     public static void main(String[] args) throws Exception {
         SpringApplication.run(Application.class, args);
     }

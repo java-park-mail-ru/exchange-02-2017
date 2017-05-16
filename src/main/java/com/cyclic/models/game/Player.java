@@ -23,7 +23,7 @@ public class Player {
 
     private String nickname;
     private long id;
-    private transient long units;
+    private long units;
     private int beginX = 0;
     private int beginY = 0;
     private transient Room room = null;
