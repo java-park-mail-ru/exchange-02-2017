@@ -186,7 +186,7 @@ public class Room {
             pid = players.get(performingPlayerIndex).getId();
             moveBroadcast.setNextpid(pid);
             players.forEach(p -> {
-                moveBroadcast.addScores(new PlayerScore(p.getId(), p.getUnits()));
+                moveBroadcast.addScores(new PlayerScore(p.getId(), p.getUnits(), p.towersCount()));
             });
             broadcast(gson.toJson(moveBroadcast));
         } else {

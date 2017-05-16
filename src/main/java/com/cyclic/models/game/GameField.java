@@ -1,11 +1,16 @@
 package com.cyclic.models.game;
 
+import com.cyclic.LOG;
 import com.cyclic.models.game.net.broadcast.MoveBroadcast;
 import com.cyclic.models.game.net.broadcast.NewBonusBroadcast;
 import com.cyclic.models.game.net.fromclient.Move;
+import com.cyclic.models.game.net.toclient.NodesLink;
 import com.cyclic.models.game.net.toclient.RNode;
+import com.sun.istack.internal.NotNull;
 import com.sun.istack.internal.Nullable;
+import com.sun.rowset.internal.Row;
 
+import javax.validation.constraints.Null;
 import java.awt.*;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
@@ -16,32 +21,39 @@ import static com.cyclic.configs.Enums.MoveResult.*;
  * Created by serych on 03.04.17.
  */
 public class GameField {
-    private final static Random randomDelta = new Random(); // TODO check
     private transient int height, width;
     private transient Node[][] world;
+    private transient Vector<Point> freePoints;
     private transient Room room;
 
     public GameField(Room room, int height, int width) {
         this.room = room;
         world = new Node[height][width];
-        for (int i = 0; i < height; i++) {
-            for (int j = 0; j < width; j++) {
-                world[i][j] = null;
+        freePoints = new Vector<>();
+        for (int i = 0; i < width; i++) {
+            for (int j = 0; j < height; j++) {
+                freePoints.add(new Point(i, j));
             }
         }
         this.height = height;
         this.width = width;
-
     }
 
     public Node getByPosition(int x, int y) {
         return world[y][x];
     }
 
-    public void setNodeToPosition(int beginX, int beginY, Node node) {
-        if (beginX < 0 || beginX >= width || beginY < 0 || beginY >= height)
-            return;
-        world[beginY][beginX] = node;
+    public void setNodeToPosition(int x, int y, Node node) {
+        if (x < 0 || x >= width || y < 0 || y >= height) {
+            LOG.error(new Exception("Cannot set node to position! Index is out of range!"));
+        }
+        if (node == null) {
+            freePoints.add(new Point(x,y));
+        }
+        else {
+            freePoints.remove(new Point(x, y));
+        }
+        world[y][x] = node;
     }
 
     public void addAndBroadcastRandomBonuses(int count) {
@@ -55,46 +67,22 @@ public class GameField {
                     point.x,
                     point.y
             );
-            world[point.y][point.x] = node;
+            setNodeToPosition(point.x, point.y, node);
             bonuses.add(node);
         }
         room.broadcast(room.getGson().toJson(new NewBonusBroadcast(bonuses)));
     }
 
+    @Nullable
     public Point findRandomNullPoint() {
-        int x = 0, y = 0;
-        // try to find random point 10 times
-        for (int i = 0; i < 10; i++) {
-            x = ThreadLocalRandom.current().nextInt(0, width);
-            y = ThreadLocalRandom.current().nextInt(0, height);
-            if (world[y][x] == null) {
-                return new Point(x, y);
-            }
-        }
-        // go layer by layer to find free point
-        for (int i = 0; i < width * height; i++) {
-            x++;
-            if (x == width) {
-                x = 0;
-                y++;
-            }
-            if (y == height) {
-                y = 0;
-            }
-            if (world[y][x] == null) {
-                return new Point(x, y);
-            }
-        }
-        // reaches if there is NO free point. If during production this code will go, tell it to @SCaptainCAP. I'll buy you shaurma
-        return null;
-    }
-
-    public void stopGame() {
-        room = null;
+        if (freePoints.size() == 0)
+            return null;
+        int rand = ThreadLocalRandom.current().nextInt(0, freePoints.size());
+        return freePoints.get(rand);
     }
 
     private boolean checkTurn(Node node) {
-        return node != null && node.getPlayerID() == room.getPid();
+        return node != null && node.getPid() == room.getPid();
     }
 
     /**
@@ -129,6 +117,7 @@ public class GameField {
         MoveBroadcast moveBroadcast = new MoveBroadcast();
         moveBroadcast.setResult(ACCEPT_OK);
         moveBroadcast.addNewNode(newNode);
+        moveBroadcast.addNewLink(fromNode, newNode);
         moveBroadcast.addValueUpdate(fromNode);
 
         return moveBroadcast;
@@ -146,6 +135,7 @@ public class GameField {
         MoveBroadcast moveBroadcast = new MoveBroadcast();
         moveBroadcast.setResult(ACCEPT_OK);
         moveBroadcast.addNewNode(newNode);
+        moveBroadcast.addNewLink(fromNode, newNode);
         moveBroadcast.addRemovedNode(newNode.getReduced());
         moveBroadcast.addValueUpdate(fromNode);
 
@@ -174,6 +164,7 @@ public class GameField {
         fromNode.addToValue(-moveUnits);
 
         int delta = enemyNode.getValue() - moveUnits;
+        Player enemy = room.getPlayer(enemyNode.getPid());
         /*
          *  delta < 0 ~ current Player win
          *  delta = 0 ~ Random
@@ -181,51 +172,71 @@ public class GameField {
          */
 
         if (delta == 0) {
-            delta = (randomDelta.nextInt(1)) == 0 ? 1 : -1;
+            delta = ThreadLocalRandom.current().nextInt(0, 2) == 0 ? 1 : -1;
         }
 
         MoveBroadcast moveBroadcast = new MoveBroadcast();
-
-        Vector<RNode> deletedNodes;
+        Node newNode;
+        NodesAndLinks deleted;
         if (delta > 0) {
-            deletedNodes = killNode(fromNode);
+            deleted = killNode(fromNode);
             enemyNode.addToValue(-moveUnits);
             moveBroadcast.addValueUpdate(enemyNode);
             moveBroadcast.setResult(ACCEPT_LOSE);
         } else {
-            deletedNodes = killNode(enemyNode);
+            deleted = killNode(enemyNode);
             fromNode.addToValue(-moveUnits);
+            newNode = addNewTower(fromNode, player,
+                    moveUnits - delta, move);
+            moveBroadcast.addNewLink(fromNode, newNode);
             moveBroadcast.addValueUpdate(fromNode);
             moveBroadcast.setResult(ACCEPT_WIN);
         }
+        player.addToUnits(-delta);
+        enemy.addToUnits(delta);
 
-        moveBroadcast.setRemovedNodes(deletedNodes);
+        moveBroadcast.setRemovedNodes(deleted.getNodes());
+        moveBroadcast.setRemovedLinks(deleted.getLinks());
 
         return moveBroadcast;
     }
 
-    public Vector<RNode> killNode(Node node) {
+
+    /**
+     * @param node Node to kill
+     * @return Special container that consists of deleted nodes and links
+     */
+    public NodesAndLinks killNode(Node node) {
         if (node == null)
             return null;
         world[node.getY()][node.getX()] = null;
         if (node.isBonus()) {
             Vector<RNode> deleteNodes = new Vector<>();
             deleteNodes.add(node.getReduced());
-            return deleteNodes;
+            return new NodesAndLinks(deleteNodes, null);
         } else {
-            Player player = room.getPlayer(node.getPlayerID());
+            Player player = room.getPlayer(node.getPid());
+            HashMap<Node, HashSet<Node>> nodesMap = player.getNodesMap();
 
             // If killed main player's node
             // Remove player from game
             if (player.getMainNode() == node) {
                 room.removePlayer(player);
-                Vector<Node> deleteNodes = player.getNodes();
+                Vector<RNode> deleteNodes = player.getReducedNodes();
                 deleteNodes.forEach(n -> {
                     setNodeToPosition(n.getX(), n.getY(), null);
                 });
-                return player.getReducedNodes();
+                HashSet<NodesLink> deletedLinks = new HashSet<>();
+                nodesMap.forEach((n1, nodes) -> {
+                    nodes.forEach(n2 -> deletedLinks.add(new NodesLink(n1.getReduced(), n2.getReduced())));
+                });
+                Vector<NodesLink> linksv = new Vector<>();
+                linksv.addAll(deletedLinks);
+                if (linksv.isEmpty())
+                    linksv = null;
+                return new NodesAndLinks(deleteNodes, linksv);
             }
-            HashMap<Node, HashSet<Node>> nodesMap = player.getNodesMap();
+
 
             // remove THIS node from map
             if (nodesMap.containsKey(node)) {
@@ -260,27 +271,51 @@ public class GameField {
             // Now we have visitedNodes map. If node was not visited,
             // remove it from world and add to returning array
             Vector<RNode> deleteNodes = new Vector<>();
+            HashSet<NodesLink> deletedLinks = new HashSet<>();
             deleteNodes.add(node.getReduced());
+            nodesMap.get(node).forEach(n -> {
+               deletedLinks.add(new NodesLink(node.getReduced(), n.getReduced()));
+            });
             visitedNodes.forEach((n, visited) -> {
                 if (!visited) {
                     for (Node v : nodesMap.get(n)) {
                         nodesMap.get(v).remove(n);
+                        deletedLinks.add(new NodesLink(n.getReduced(), v.getReduced()));
                     }
                     nodesMap.remove(n);
                     deleteNodes.add(n.getReduced());
                     setNodeToPosition(n.getX(), n.getY(), null);
                 }
             });
-            return deleteNodes;
+
+            Vector<NodesLink> linksv = new Vector<>();
+            linksv.addAll(deletedLinks);
+            if (linksv.isEmpty())
+                linksv = null;
+            return new NodesAndLinks(deleteNodes, linksv);
         }
     }
 
-    public void removeNode(Node node) {
-        if (node == null)
-            return;
-        if (node.getX() < 0 || node.getX() >= width || node.getY() < 0 || node.getY() >= height)
-            return;
-        world[node.getY()][node.getX()] = null;
+    private class NodesAndLinks {
+        Vector<RNode> nodes;
+        Vector<NodesLink> links;
+
+        public NodesAndLinks(Vector<RNode> nodes, Vector<NodesLink> links) {
+            this.nodes = nodes;
+            this.links = links;
+        }
+
+        public Vector<RNode> getNodes() {
+            return nodes;
+        }
+
+        public Vector<NodesLink> getLinks() {
+            return links;
+        }
+    }
+
+    public void removeNode(@NotNull Node node) {
+        setNodeToPosition(node.getX(), node.getY(), null);
     }
 
     @Nullable

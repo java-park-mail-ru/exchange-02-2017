@@ -6,9 +6,11 @@ package com.cyclic.models.game.net.toclient;
 public class PlayerScore {
     private long pid;
     private long score;
+    private long towers;
 
-    public PlayerScore(long pid, long score) {
+    public PlayerScore(long pid, long score, long towers) {
         this.pid = pid;
         this.score = score;
+        this.towers = towers;
     }
 }

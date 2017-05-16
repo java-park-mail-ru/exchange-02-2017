@@ -88,7 +88,7 @@ public class WebSocketController extends TextWebSocketHandler {
             if (player == null)
                 return;
             if (webSocketAnswer.getAction() == null)
-                player.disconnectBadApi("There is no actionCode!");
+                player.disconnectBadApi("Bad actionCode");
             LOG.webSocketLog("Message from " + player.getNickname()+ " (Ip " + session.getRemoteAddress() + "). Code: " + webSocketAnswer.getAction());
             switch (webSocketAnswer.getAction()) {
                 case ACTION_READY_FOR_ROOM_SEARCH:

@@ -1,5 +1,6 @@
 package com.cyclic.services.game;
 
+import com.cyclic.Application;
 import com.cyclic.configs.ResourceManager;
 import com.cyclic.models.game.Player;
 import com.cyclic.models.game.Room;
@@ -20,9 +21,8 @@ public class RoomManager {
 
     private ResourceManager resourceManager;
 
-    @Autowired
-    public RoomManager(ResourceManager resourceManager) {
-        this.resourceManager = resourceManager;
+    public RoomManager() {
+        this.resourceManager = Application.resourceManager;
         allRooms = new ConcurrentHashMap<>();
         freeRooms = new Vector<>();
     }

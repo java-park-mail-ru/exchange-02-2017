@@ -26,12 +26,13 @@ public class AccountServiceDB implements AccountService {
     final private JdbcTemplate template;
     private final RowMapper<User> userMapper = (rs, num) -> {
         final long id = rs.getInt("id");
+        final long highScore = rs.getInt("highScore");
         final String login = rs.getString("login");
         final String email = rs.getString("email");
         final String password = rs.getString("password");
         final String firstName = rs.getString("firstName");
         final String lastName = rs.getString("lastName");
-        return new User(id, firstName, lastName, email, login, password);
+        return new User(id, firstName, lastName, email, login, password, highScore);
     };
 
     @Autowired
@@ -63,6 +64,22 @@ public class AccountServiceDB implements AccountService {
         } catch (DataAccessException e) {
             return null;
         }
+    }
+
+    @Override
+    public int updateUserHighscore(Long id, long score) {
+        String query = new StringBuilder()
+                .append("UPDATE users SET highScore = ? ")
+                .append("WHERE id = ? ;")
+                .toString();
+        try {
+            template.update(query, id, score);
+        } catch (DuplicateKeyException e) {
+            return ERROR_DUPLICATE;
+        } catch (DataAccessException e) {
+            return ERROR_UNDEFINED;
+        }
+        return OK;
     }
 
     public User getUserByLogin(String login) {
@@ -131,7 +148,8 @@ public class AccountServiceDB implements AccountService {
             users.add(new User(
                             Long.parseLong(row.get("id").toString()), firstName,
                             lastName, row.get("email").toString(),
-                            row.get("login").toString(), row.get("password").toString()
+                            row.get("login").toString(), row.get("password").toString(),
+                            Long.parseLong(row.get("highScore").toString())
                     )
             );
         }

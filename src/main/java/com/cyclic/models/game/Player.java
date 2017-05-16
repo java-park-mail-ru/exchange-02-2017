@@ -23,7 +23,7 @@ public class Player {
 
     private String nickname;
     private long id;
-    private long units;
+    private transient long units;
     private int beginX = 0;
     private int beginY = 0;
     private transient Room room = null;
@@ -156,5 +156,13 @@ public class Player {
             vector.add(node.getReduced());
         });
         return vector;
+    }
+
+    public void addToUnits(int count) {
+        units += count;
+    }
+
+    public int towersCount() {
+        return nodesMap.size();
     }
 }

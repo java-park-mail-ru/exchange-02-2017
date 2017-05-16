@@ -15,6 +15,9 @@ public class LOG {
     public static void error(Exception e) {
         //e.printStackTrace();
     }
+    public static void error(String e) {
+        //e.printStackTrace();
+    }
 
     public static void webSocketLog(String string) {
         System.out.println(string);

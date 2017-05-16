@@ -21,6 +21,8 @@ public interface AccountService {
 
     User getUserById(Long id);
 
+    int updateUserHighscore(Long id, long score);
+
     User getUserByLogin(String login);
 
     User getUserByEmail(String email);

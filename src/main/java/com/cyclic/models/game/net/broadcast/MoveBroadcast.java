@@ -85,4 +85,8 @@ public class MoveBroadcast {
     public void setRemovedNodes(Vector<RNode> removedNodes) {
         this.removedNodes = removedNodes;
     }
+
+    public void setRemovedLinks(Vector<NodesLink> removedLinks) {
+        this.removedLinks = removedLinks;
+    }
 }

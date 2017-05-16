@@ -23,16 +23,20 @@ public class UserView {
     private String firstName;
     @JsonProperty
     private String lastName;
+    @JsonProperty
+    private Long highScore;
 
     @JsonCreator
     public UserView(@JsonProperty("firstName") String firstName,
                     @JsonProperty("lastName") String lastName,
                     @JsonProperty("email") String email,
-                    @JsonProperty("login") String login) {
+                    @JsonProperty("login") String login,
+                    @JsonProperty(value = "highScore") Long highScore) {
         this.id = ID_GENERATOR.getAndIncrement();
         this.login = login;
         this.firstName = firstName;
         this.lastName = lastName;
+        this.highScore = highScore;
     }
 
     UserView(User user) {
@@ -40,6 +44,7 @@ public class UserView {
         this.login = user.getLogin();
         this.firstName = user.getFirstName();
         this.lastName = user.getLastName();
+        this.highScore = user.getHighScore();
     }
 
     public UserView() {
@@ -73,4 +78,11 @@ public class UserView {
         this.lastName = lastName;
     }
 
+    public Long getHighScore() {
+        return highScore;
+    }
+
+    public void setHighScore(Long highScore) {
+        this.highScore = highScore;
+    }
 }

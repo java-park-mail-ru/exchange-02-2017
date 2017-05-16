@@ -24,6 +24,8 @@ public class User {
     private String password;
     @JsonProperty
     private String email;
+    @JsonProperty
+    private Long highScore;
 
     @SuppressWarnings("unused")
     @JsonCreator
@@ -32,7 +34,18 @@ public class User {
                 @JsonProperty("lastName") String lastName,
                 @JsonProperty("email") String email,
                 @JsonProperty("login") String login,
-                @JsonProperty("password") String password) {
+                @JsonProperty("password") String password,
+                @JsonProperty(value = "highScore") Long highScore) {
+        this.id = id;
+        this.login = login;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.password = password;
+        this.email = email;
+        this.highScore = highScore;
+    }
+
+    public User(Long id,String firstName,String lastName,String email,String login,String password) {
         this.id = id;
         this.login = login;
         this.firstName = firstName;
@@ -98,5 +111,9 @@ public class User {
 
     public UserView toView() {
         return new UserView(this);
+    }
+
+    public Long getHighScore() {
+        return highScore;
     }
 }

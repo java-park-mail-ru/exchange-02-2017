@@ -76,7 +76,7 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new Status("user not authorized"));
         }
 
-        return ResponseEntity.ok(accountService.getUserById((Long) httpSession.getAttribute("userId")));
+        return ResponseEntity.ok(accountService.getUserById((Long) httpSession.getAttribute("userId")).toView());
     }
 
     @RequestMapping(path = "/{userId}", method = RequestMethod.GET, produces = "application/json")

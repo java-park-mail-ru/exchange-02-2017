@@ -11,28 +11,28 @@ public class Node {
     /**
      * If -1, it is BONUS
      */
-    private long playerID;
+    private long pid;
     private int value;
     private int x;
     private int y;
 
-    public Node(long playerID, int value, int x, int y) {
+    public Node(long pid, int value, int x, int y) {
         this.value = value;
-        this.playerID = playerID;
+        this.pid = pid;
         this.x = x;
         this.y = y;
     }
 
     public Node(int value, int x, int y) {
         this.value = value;
-        this.playerID = -1;
+        this.pid = -1;
         this.x = x;
         this.y = y;
     }
 
 
-    public long getPlayerID() {
-        return playerID;
+    public long getPid() {
+        return pid;
     }
 
     public int getX() {
@@ -57,6 +57,6 @@ public class Node {
     }
 
     public boolean isBonus() {
-        return playerID == -1;
+        return pid == -1;
     }
 }
