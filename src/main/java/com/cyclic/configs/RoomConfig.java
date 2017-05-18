@@ -1,22 +1,36 @@
 package com.cyclic.configs;
 
-import org.springframework.beans.factory.annotation.Value;
+import com.cyclic.models.game.Room;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.validation.annotation.Validated;
 
 /**
  * Created by serych on 27.04.17.
  */
 @ConfigurationProperties(prefix = "game.room")
-public class RoomConfig {
+public class RoomConfig implements Cloneable{
     private Integer playersCount;
     private Integer startBonusCount;
     private Integer startTowerUnits;
     private Integer bonusMinValue;
     private Integer bonusMaxValue;
     private Integer fieldWidth;
-
     private Integer fieldHeight;
+
+    /**
+     * Copy constructor
+     */
+    public RoomConfig(RoomConfig config) {
+        playersCount = new Integer(config.getPlayersCount());
+        startBonusCount = new Integer(config.getStartBonusCount());
+        startTowerUnits = new Integer(config.getStartTowerUnits());
+        bonusMinValue = new Integer(config.getBonusMinValue());
+        bonusMaxValue = new Integer(config.getBonusMaxValue());
+        fieldWidth = new Integer(config.getFieldWidth());
+        fieldHeight = new Integer(config.getFieldHeight());
+    }
+
+    public RoomConfig() {
+    }
 
     public Integer getPlayersCount() {
         return playersCount;

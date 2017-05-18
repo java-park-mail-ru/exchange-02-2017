@@ -23,6 +23,7 @@ public class Player {
 
     private String nickname;
     private long id;
+    private int color;
     private long units;
     private int beginX = 0;
     private int beginY = 0;
@@ -31,7 +32,6 @@ public class Player {
     private transient Gson gson;
     private transient Node mainNode;
     private transient HashMap<Node, HashSet<Node>> nodesMap;
-    private boolean readyForGameStart = false;
 
 
     public Player(WebSocketSession webSocketSession, String nickname, long id) {
@@ -40,6 +40,14 @@ public class Player {
         this.nickname = nickname;
         this.id = id;
         this.nodesMap = new HashMap<>();
+    }
+
+    public int getColor() {
+        return color;
+    }
+
+    public void setColor(int color) {
+        this.color = color;
     }
 
     public String getNickname() {
@@ -74,25 +82,12 @@ public class Player {
         }
     }
 
-    public void sendDatatype(String datatype) {
+    public void sendDatatype(Enums.Datatype datatype) {
         sendString("{datatype:" + datatype + "}");
     }
 
     public WebSocketSession getWebSocketSession() {
         return webSocketSession;
-    }
-
-    public boolean isReadyForGameStart() {
-        return readyForGameStart;
-    }
-
-    public void setReadyForGameStart(boolean readyForGameStart) {
-        boolean changed = false;
-        if (this.readyForGameStart != readyForGameStart)
-            changed = true;
-        this.readyForGameStart = readyForGameStart;
-        if (room != null && changed)
-            room.start();
     }
 
     public void disconnect(Enums.DisconnectReason code, String data) {

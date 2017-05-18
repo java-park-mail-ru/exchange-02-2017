@@ -7,7 +7,7 @@ import com.cyclic.models.game.net.fromclient.HelloMessage;
 import com.cyclic.models.game.net.fromclient.WebSocketAnswer;
 import com.cyclic.models.game.net.toclient.ConnectionError;
 import com.cyclic.services.AccountServiceDB;
-import com.cyclic.services.game.PlayerManager;
+import com.cyclic.services.game.SessionManager;
 import com.cyclic.services.game.RoomManager;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -19,13 +19,14 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
+import static com.cyclic.configs.Enums.Datatype.DATATYPE_PONG;
 import static com.cyclic.configs.Enums.DisconnectReason.DISCONNECT_REASON_NOT_LOGINED;
 
 @Service
 public class WebSocketController extends TextWebSocketHandler {
 
     private RoomManager roomManager;
-    private PlayerManager playerManager;
+    private SessionManager sessionManager;
     private Gson gson;
 
     private AccountServiceDB accountService;
@@ -34,7 +35,7 @@ public class WebSocketController extends TextWebSocketHandler {
     public WebSocketController(RoomManager roomManager, AccountServiceDB accountService) {
         this.roomManager = roomManager;
         this.accountService = accountService;
-        playerManager = new PlayerManager();
+        sessionManager = new SessionManager();
         gson = new GsonBuilder().create();
     }
 
@@ -46,10 +47,10 @@ public class WebSocketController extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
-        Player player = playerManager.getPlayerForSession(session);
+        Player player = sessionManager.getPlayerForSession(session);
         if (player != null) {
-            roomManager.deletePlayerFromAnyRoom(player);
-            playerManager.deletePlayer(player);
+            roomManager.deletePlayerFromAnyRoom(player, false);
+            sessionManager.deletePlayer(player);
             LOG.webSocketLog("Websocket disconnected.  IP: " + session.getRemoteAddress() +
                     ", Nick: " + player.getNickname());
         }
@@ -66,10 +67,11 @@ public class WebSocketController extends TextWebSocketHandler {
             return;
         }
         Player player = new Player(session, user.getLogin(), user.getId());
-        playerManager.createPlayer(session, player);
+        sessionManager.createPlayer(session, player);
         LOG.webSocketLog("New websocket connected. IP: " + session.getRemoteAddress() +
                 ", Nick: " + player.getNickname());
         session.sendMessage(new TextMessage(gson.toJson(new HelloMessage(player.getNickname(), player.getId()))));
+        roomManager.addPlayerWithNoRoom(player);
     }
 
 
@@ -83,7 +85,7 @@ public class WebSocketController extends TextWebSocketHandler {
             LOG.error(e);
         }
         if (webSocketAnswer != null) {
-            Player player = playerManager.getPlayerForSession(session);
+            Player player = sessionManager.getPlayerForSession(session);
             if (player == null)
                 return;
             if (webSocketAnswer.getAction() == null)
@@ -92,14 +94,21 @@ public class WebSocketController extends TextWebSocketHandler {
             try {
                 switch (webSocketAnswer.getAction()) {
                     case ACTION_READY_FOR_ROOM_SEARCH:
-                        roomManager.findRoomForThisGuy(player);
+                        roomManager.findRoomForThisGuy(player, webSocketAnswer.getRoomCapacity());
                         break;
-                    case ACTION_READY_FOR_GAME_START:
-                        player.setReadyForGameStart(true);
+                    case ACTION_EXIT_ROOM:
+                        roomManager.deletePlayerFromAnyRoom(player, true);
+                        break;
+                    case ACTION_PING:
+                        player.sendDatatype(DATATYPE_PONG);
                         break;
                     case ACTION_GAME_MOVE:
                         if (player.getRoom() == null) {
                             player.disconnectBadApi("You move while not in the room");
+                            break;
+                        }
+                        if (webSocketAnswer.getMove() == null) {
+                            player.disconnectBadApi("You need to specify move!");
                             break;
                         }
                         player.getRoom().acceptMove(player, webSocketAnswer.getMove());

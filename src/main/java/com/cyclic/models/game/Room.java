@@ -7,6 +7,7 @@ import com.cyclic.models.game.net.broadcast.PlayerDisconnectBroadcast;
 import com.cyclic.models.game.net.broadcast.RoomDestructionBroadcast;
 import com.cyclic.models.game.net.fromclient.Move;
 import com.cyclic.models.game.net.toclient.PlayerScore;
+import com.cyclic.services.game.RoomManager;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -26,7 +27,7 @@ import static com.cyclic.configs.Enums.RoomStatus.*;
 public class Room {
     private final Enums.Datatype datatype = DATATYPE_ROOMINFO;
 
-    private transient int playersCount;
+    private int capacity;
     private transient int startBonusCount;
     private transient int startTowerUnits;
     private transient int bonusMinValue;
@@ -41,12 +42,16 @@ public class Room {
     private transient int performingPlayerIndex;
     private transient Gson gson;
     private transient GameField field;
+    private transient Vector<Integer> freeColors;
+    private transient RoomConfig roomConfig;
+    private transient RoomManager roomManager;
 
 
-    public Room(long roomID, RoomConfig roomConfig) {
+    public Room(long roomID, RoomManager roomManager, RoomConfig roomConfig) {
         this.roomID = roomID;
-
-        playersCount = roomConfig.getPlayersCount();
+        this.roomConfig = roomConfig;
+        this.roomManager = roomManager;
+        capacity = roomConfig.getPlayersCount();
         startBonusCount = roomConfig.getStartBonusCount();
         startTowerUnits = roomConfig.getStartTowerUnits();
         bonusMaxValue = roomConfig.getBonusMaxValue();
@@ -54,11 +59,23 @@ public class Room {
         fieldHeight = roomConfig.getFieldHeight();
         fieldWidth = roomConfig.getFieldWidth();
 
+        freeColors = new Vector<>(capacity);
+        for (int i = 0; i < capacity; i++) {
+            freeColors.add(i);
+        }
         status = STATUS_CREATING;
-        players = new Vector<>(playersCount);
+        players = new Vector<>(capacity);
         field = new GameField(this, fieldHeight, fieldWidth);
         gson = new GsonBuilder().create();
         pid = null;
+    }
+
+    public RoomConfig getRoomConfig() {
+        return roomConfig;
+    }
+
+    public int getCapacity() {
+        return capacity;
     }
 
     public int getPlayersCount() {
@@ -70,20 +87,23 @@ public class Room {
     }
 
     public boolean isFull() {
-        return players.size() == playersCount;
+        return players.size() == capacity;
     }
 
     /**
-     * Adds player to this room
+     * Adds player to this room. Starts room if it is full
      *
      * @param player Player to add
      * @return True if the player was added. False if error has occurred
      */
     public boolean addPlayer(Player player) {
+        // TODO Make a new thread to just return value and then in thread do other work
         if (status != STATUS_CREATING)
             return false;
         player.setRoom(this);
         players.add(player);
+        player.setColor(freeColors.get(0));
+        freeColors.remove(0);
         Point point = field.findRandomNullPoint();
         player.setBeginX(point.x);
         player.setBeginY(point.y);
@@ -94,8 +114,15 @@ public class Room {
 
         player.setMainNode(mainNode);
         player.getNodesMap().put(mainNode, new HashSet<>());
-        if (players.size() == playersCount) {
-            status = STATUS_FULL_SMB_NOT_READY;
+
+        // Start game if room is full
+        if (isFull()) {
+            status = STATUS_PLAYING;
+            performingPlayerIndex = ThreadLocalRandom.current().nextInt(0, capacity);
+            pid = players.get(performingPlayerIndex).getId();
+            broadcastRoomUpdate();
+            field.addAndBroadcastRandomBonuses(startBonusCount);
+            return true;
         }
         broadcastRoomUpdate();
         return true;
@@ -107,14 +134,21 @@ public class Room {
      */
     public Player removePlayer(Player player) {
         if (players.remove(player)) {
-            player.sendDatatype(DATATYPE_YOU_LOSE + "");
+            if (roomManager != null)
+                roomManager.addPlayerWithNoRoom(player);
+            freeColors.add(player.getColor());
+            if (status == STATUS_CREATING) {
+                broadcastRoomUpdate();
+                return null;
+            }
+            player.sendDatatype(DATATYPE_YOU_LOSE);
             for (Node node : player.getNodesMap().keySet()) {
                 field.removeNode(node);
             }
             if (getPlayersCount() > 1) {
                 broadcast(gson.toJson(new PlayerDisconnectBroadcast(player.getId())));
                 if (status == STATUS_PLAYING) {
-                    performingPlayerIndex %= playersCount;
+                    performingPlayerIndex %= capacity;
                     pid = players.get(performingPlayerIndex).getId();
                 }
                 broadcastRoomUpdate();
@@ -125,6 +159,7 @@ public class Room {
                     return players.get(0);
             }
         }
+
         return null;
     }
 
@@ -149,30 +184,9 @@ public class Room {
     }
 
     /**
-     * Start room!
-     *
-     * @return True if room started. False if error has occurred
+     * If {@param move} is null, it will say, that user timed out it's move and meth
      */
-    public boolean start() {
-        if (status == STATUS_FULL_SMB_NOT_READY) {
-            for (Player player : players) {
-                if (!player.isReadyForGameStart()) {
-                    broadcastRoomUpdate();
-                    return false;
-                }
-            }
-            status = STATUS_PLAYING;
-            performingPlayerIndex = ThreadLocalRandom.current().nextInt(0, playersCount);
-            pid = players.get(performingPlayerIndex).getId();
-            broadcastRoomUpdate();
-
-            field.addAndBroadcastRandomBonuses(startBonusCount);
-            return true;
-        }
-        broadcastRoomUpdate();
-        return false;
-    }
-
+    // TODO Handle move is null, then just pass move to another player and notify other players about it
     public void acceptMove(Player player, Move move) {
         if (status == STATUS_PLAYING && field != null && pid.equals(player.getId())) {
             MoveBroadcast moveBroadcast = field.acceptMove(player, move);
@@ -182,7 +196,7 @@ public class Room {
             }
             moveBroadcast.setPid(pid);
             performingPlayerIndex += 1;
-            performingPlayerIndex %= playersCount;
+            performingPlayerIndex %= capacity;
             pid = players.get(performingPlayerIndex).getId();
             moveBroadcast.setNextpid(pid);
             players.forEach(p -> {

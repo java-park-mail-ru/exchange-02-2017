@@ -3,6 +3,7 @@ package com.cyclic;
 import com.cyclic.configs.RoomConfig;
 import com.cyclic.models.game.Player;
 import com.cyclic.models.game.Room;
+import com.cyclic.models.game.net.fromclient.HelloMessage;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.junit.Test;
@@ -44,22 +45,39 @@ public class GameProcessTest {
 
 
     @Test
-    public void testEmptyRoom(){
-        Room room = new Room(0, roomConfig);
+    public void testEmptyRoom() {
+        Room room = new Room(0, null, roomConfig);
         assertEquals(true, room.isEmpty());
         assertEquals(false, room.isFull());
-        assertEquals(false, room.start());
     }
 
     @Test
-    public void testNotPlayingRoom(){
-        Room room = new Room(0, roomConfig);
+    public void testNotPlayingRoom() {
+        Room room = new Room(0, null, roomConfig);
         Player player1 = new Player(new TestWebSocketSession(message -> {
             Gson gson = new GsonBuilder().create();
             Room qwe = gson.fromJson(message, Room.class);
             assertEquals(room.getRoomID(), qwe.getRoomID());
         }), "Lalke", 0);
         room.addPlayer(player1);
+    }
+
+    @Test
+    public void testGameplayKillNode() {
+        Room room = new Room(0, null, roomConfig);
+        Player player1 = new Player(new TestWebSocketSession(message -> {
+            Gson gson = new GsonBuilder().create();
+            Room rroom = gson.fromJson(message, Room.class);
+            HelloMessage helloMessage = gson.fromJson(message, HelloMessage.class);
+
+        }), "Lalke", 0);
+        room.addPlayer(player1);
+        Player player2 = new Player(new TestWebSocketSession(message -> {
+            Gson gson = new GsonBuilder().create();
+            Room qwe = gson.fromJson(message, Room.class);
+            assertEquals(room.getRoomID(), qwe.getRoomID());
+        }), "Lalke", 0);
+        room.addPlayer(player2);
     }
 
     interface MessageWait {
@@ -115,23 +133,23 @@ public class GameProcessTest {
         }
 
         @Override
-        public void setTextMessageSizeLimit(int i) {
-
-        }
-
-        @Override
         public int getTextMessageSizeLimit() {
             return 0;
         }
 
         @Override
-        public void setBinaryMessageSizeLimit(int i) {
+        public void setTextMessageSizeLimit(int i) {
 
         }
 
         @Override
         public int getBinaryMessageSizeLimit() {
             return 0;
+        }
+
+        @Override
+        public void setBinaryMessageSizeLimit(int i) {
+
         }
 
         @Override

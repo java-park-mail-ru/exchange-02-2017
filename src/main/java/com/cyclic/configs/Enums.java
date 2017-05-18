@@ -14,14 +14,17 @@ public class Enums {
         DATATYPE_HELLO,
         DATATYPE_ROOM_DESTRUCTION,
         DATATYPE_PLAYER_DISCONNECT,
-        DATATYPE_YOU_LOSE
+        DATATYPE_YOU_LOSE,
+        DATATYPE_ROOMMANAGER_UPDATE,
+        DATATYPE_PONG
     }
 
     // ACTIONs are used to send data TO server
     public enum Action {
         ACTION_READY_FOR_ROOM_SEARCH,
-        ACTION_READY_FOR_GAME_START,
-        ACTION_GAME_MOVE
+        ACTION_GAME_MOVE,
+        ACTION_EXIT_ROOM,
+        ACTION_PING
     }
 
     // DISCONNECT Reasons
@@ -33,8 +36,7 @@ public class Enums {
     // ROOM statuses
     public enum RoomStatus {
         STATUS_CREATING,
-        STATUS_PLAYING,
-        STATUS_FULL_SMB_NOT_READY
+        STATUS_PLAYING
     }
 
     // MOVE results

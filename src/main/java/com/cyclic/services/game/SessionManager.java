@@ -8,10 +8,10 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Created by serych on 03.04.17.
  */
-public class PlayerManager {
+public class SessionManager {
     private ConcurrentHashMap<WebSocketSession, Player> players;
 
-    public PlayerManager() {
+    public SessionManager() {
         players = new ConcurrentHashMap<>();
     }
 
