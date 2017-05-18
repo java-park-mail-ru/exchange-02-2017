@@ -97,34 +97,39 @@ public class Room {
      * @return True if the player was added. False if error has occurred
      */
     public boolean addPlayer(Player player) {
-        // TODO Make a new thread to just return value and then in thread do other work
         if (status != STATUS_CREATING)
             return false;
         player.setRoom(this);
         players.add(player);
-        player.setColor(freeColors.get(0));
-        freeColors.remove(0);
-        Point point = field.findRandomNullPoint();
-        player.setBeginX(point.x);
-        player.setBeginY(point.y);
-        player.setUnits(startTowerUnits);
-
-        Node mainNode = new Node(player.getId(), startTowerUnits, point.x, point.y);
-        field.setNodeToPosition(point.x, point.y, mainNode);
-
-        player.setMainNode(mainNode);
-        player.getNodesMap().put(mainNode, new HashSet<>());
-
-        // Start game if room is full
-        if (isFull()) {
+        if (players.size() == capacity)
             status = STATUS_PLAYING;
-            performingPlayerIndex = ThreadLocalRandom.current().nextInt(0, capacity);
-            pid = players.get(performingPlayerIndex).getId();
+
+        Thread thread = new Thread(() -> {
+
+            player.setColor(freeColors.get(0));
+            freeColors.remove(0);
+            Point point = field.findRandomNullPoint();
+            player.setBeginX(point.x);
+            player.setBeginY(point.y);
+            player.setUnits(startTowerUnits);
+
+            Node mainNode = new Node(player.getId(), startTowerUnits, point.x, point.y);
+            field.setNodeToPosition(point.x, point.y, mainNode);
+
+            player.setMainNode(mainNode);
+            player.getNodesMap().put(mainNode, new HashSet<>());
+
+            // Start game if room is full
+            if (status == STATUS_PLAYING) {
+                performingPlayerIndex = ThreadLocalRandom.current().nextInt(0, capacity);
+                pid = players.get(performingPlayerIndex).getId();
+                broadcastRoomUpdate();
+                field.addAndBroadcastRandomBonuses(startBonusCount);
+            }
             broadcastRoomUpdate();
-            field.addAndBroadcastRandomBonuses(startBonusCount);
-            return true;
-        }
-        broadcastRoomUpdate();
+        });
+        thread.start();
+
         return true;
     }
 

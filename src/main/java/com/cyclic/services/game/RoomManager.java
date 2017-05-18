@@ -85,7 +85,8 @@ public class RoomManager {
             freeRooms[roomCapacity - 2] = new Room(lastRoomId, this, room.getRoomConfig());
             broadcast.getRoomData(roomCapacity).setQueue(0);
         }
-        broadcast.getRoomData(roomCapacity).setQueue(room.getPlayersCount());
+        else
+            broadcast.getRoomData(roomCapacity).setQueue(room.getPlayersCount());
         json = Application.gson.toJson(broadcast);
         playersWithNoRoom.forEach(p -> {
             p.sendString(json);

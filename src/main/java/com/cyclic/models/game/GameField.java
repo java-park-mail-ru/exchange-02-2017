@@ -152,7 +152,7 @@ public class GameField {
         moveBroadcast.setResult(ACCEPT_OK);
         moveBroadcast.addNewNode(newNode);
         moveBroadcast.addNewLink(fromNode, newNode);
-        moveBroadcast.addRemovedNode(newNode.getReduced());
+        //moveBroadcast.addRemovedNode(newNode.getReduced());
         moveBroadcast.addValueUpdate(fromNode);
 
         return moveBroadcast;
@@ -216,7 +216,6 @@ public class GameField {
         return moveBroadcast;
     }
 
-
     /**
      * @param node Node to kill
      * @return Special container that consists of deleted nodes and links
@@ -252,14 +251,22 @@ public class GameField {
                 return new NodesAndLinks(deleteNodes, linksv);
             }
 
+            Vector<RNode> deleteNodes = new Vector<>();
+            HashSet<NodesLink> deletedLinks = new HashSet<>();
 
-            // remove THIS node from map
-//            if (nodesMap.containsKey(node)) {
-//                for (Node n : nodesMap.get(node)) {
-//                    nodesMap.get(n).remove(node);
-//                }
-//                nodesMap.remove(node);
-//            }
+            // Add THIS node to returning vectors
+            deleteNodes.add(node.getReduced());
+            nodesMap.get(node).forEach(n -> {
+                deletedLinks.add(new NodesLink(node.getReduced(), n.getReduced()));
+            });
+
+            // Remove THIS node from map
+            if (nodesMap.containsKey(node)) {
+                for (Node n : nodesMap.get(node)) {
+                    nodesMap.get(n).remove(node);
+                }
+                nodesMap.remove(node);
+            }
 
             // Create map of visited nodes in DFS
             HashMap<Node, Boolean> visitedNodes = new HashMap<>();
@@ -283,14 +290,7 @@ public class GameField {
             }
             // DFS
 
-            // Now we have visitedNodes map. If node was not visited,
-            // remove it from world and add to returning array
-            Vector<RNode> deleteNodes = new Vector<>();
-            HashSet<NodesLink> deletedLinks = new HashSet<>();
-            deleteNodes.add(node.getReduced());
-            nodesMap.get(node).forEach(n -> {
-               deletedLinks.add(new NodesLink(node.getReduced(), n.getReduced()));
-            });
+            // Add to returning vectors not visited nodes and their links
             visitedNodes.forEach((n, visited) -> {
                 if (!visited) {
                     for (Node v : nodesMap.get(n)) {
@@ -303,6 +303,7 @@ public class GameField {
                 }
             });
 
+            // Return vector instead of set
             Vector<NodesLink> linksv = new Vector<>();
             linksv.addAll(deletedLinks);
             if (linksv.isEmpty())

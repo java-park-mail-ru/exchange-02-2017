@@ -86,14 +86,18 @@ public class WebSocketController extends TextWebSocketHandler {
         }
         if (webSocketAnswer != null) {
             Player player = sessionManager.getPlayerForSession(session);
-            if (player == null)
+            if (player == null) {
+                LOG.errorConsole("Cannot find player for session!!");
                 return;
-            if (webSocketAnswer.getAction() == null)
+            }
+            if (webSocketAnswer.getAction() == null) {
                 player.disconnectBadApi("Bad actionCode");
+                return;
+            }
             LOG.webSocketLog("Message from " + player.getNickname() + " (Ip " + session.getRemoteAddress() + "). Code: " + webSocketAnswer.getAction());
             try {
                 switch (webSocketAnswer.getAction()) {
-                    case ACTION_READY_FOR_ROOM_SEARCH:
+                    case ACTION_GIVE_ME_ROOM:
                         roomManager.findRoomForThisGuy(player, webSocketAnswer.getRoomCapacity());
                         break;
                     case ACTION_EXIT_ROOM:

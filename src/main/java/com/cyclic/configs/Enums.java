@@ -21,7 +21,7 @@ public class Enums {
 
     // ACTIONs are used to send data TO server
     public enum Action {
-        ACTION_READY_FOR_ROOM_SEARCH,
+        ACTION_GIVE_ME_ROOM,
         ACTION_GAME_MOVE,
         ACTION_EXIT_ROOM,
         ACTION_PING
