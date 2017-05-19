@@ -3,7 +3,7 @@ package com.cyclic.controllers;
 import com.cyclic.LOG;
 import com.cyclic.models.base.User;
 import com.cyclic.models.game.Player;
-import com.cyclic.models.game.net.fromclient.HelloMessage;
+import com.cyclic.models.game.net.toclient.HelloMessage;
 import com.cyclic.models.game.net.fromclient.WebSocketAnswer;
 import com.cyclic.models.game.net.toclient.ConnectionError;
 import com.cyclic.services.AccountServiceDB;
@@ -113,6 +113,10 @@ public class WebSocketController extends TextWebSocketHandler {
                         }
                         if (webSocketAnswer.getMove() == null) {
                             player.disconnectBadApi("You need to specify move!");
+                            break;
+                        }
+                        if (!webSocketAnswer.getMove().isValid()) {
+                            player.disconnectBadApi("Your move is not valid!");
                             break;
                         }
                         player.getRoom().acceptMove(player, webSocketAnswer.getMove());

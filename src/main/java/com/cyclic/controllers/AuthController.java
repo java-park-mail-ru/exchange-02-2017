@@ -1,5 +1,6 @@
 package com.cyclic.controllers;
 
+import com.cyclic.configs.HttpServerConfiguration;
 import com.cyclic.models.base.Status;
 import com.cyclic.models.base.User;
 import com.cyclic.services.AccountService;
@@ -19,13 +20,6 @@ import javax.servlet.http.HttpSession;
 
 @SuppressWarnings({"WeakerAccess", "DefaultFileTemplate"})
 @RestController
-@CrossOrigin(
-        methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE, RequestMethod.OPTIONS},
-        maxAge = 3600,
-        allowedHeaders = {"Content-Type", "Origin", "X-Requested-With", "Accept"},
-        allowCredentials = "true",
-        origins = {"http://localhost:3000", "https://cyclicgame.herokuapp.com", "http://172.16.91.197:3000", "http://172.20.10.2:3000"}
-)
 @RequestMapping(path = "/api/login")
 public class AuthController {
 

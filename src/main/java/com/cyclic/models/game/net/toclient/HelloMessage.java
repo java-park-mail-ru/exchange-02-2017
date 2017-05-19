@@ -1,4 +1,4 @@
-package com.cyclic.models.game.net.fromclient;
+package com.cyclic.models.game.net.toclient;
 
 import com.cyclic.configs.Enums;
 

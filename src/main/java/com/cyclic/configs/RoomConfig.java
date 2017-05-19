@@ -1,6 +1,5 @@
 package com.cyclic.configs;
 
-import com.cyclic.models.game.Room;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
@@ -15,6 +14,8 @@ public class RoomConfig implements Cloneable{
     private Integer bonusMaxValue;
     private Integer fieldWidth;
     private Integer fieldHeight;
+    private Double moveRadius;
+    private Double moveTimeSeconds;
 
     /**
      * Copy constructor
@@ -27,6 +28,8 @@ public class RoomConfig implements Cloneable{
         bonusMaxValue = new Integer(config.getBonusMaxValue());
         fieldWidth = new Integer(config.getFieldWidth());
         fieldHeight = new Integer(config.getFieldHeight());
+        moveRadius = new Double(config.getMoveRadius());
+        moveTimeSeconds = new Double(config.getMoveTimeSeconds());
     }
 
     public RoomConfig() {
@@ -88,6 +91,22 @@ public class RoomConfig implements Cloneable{
         this.fieldHeight = fieldHeight;
     }
 
+    public Double getMoveRadius() {
+        return moveRadius;
+    }
+
+    public void setMoveRadius(Double moveRadius) {
+        this.moveRadius = moveRadius;
+    }
+
+    public Double getMoveTimeSeconds() {
+        return moveTimeSeconds;
+    }
+
+    public void setMoveTimeSeconds(Double moveTimeSeconds) {
+        this.moveTimeSeconds = moveTimeSeconds;
+    }
+
     public boolean isCorrect() {
         return
                 playersCount != null &&
@@ -96,6 +115,8 @@ public class RoomConfig implements Cloneable{
                         bonusMaxValue != null &&
                         bonusMinValue != null &&
                         fieldHeight != null &&
+                        moveRadius != null &&
+                        moveTimeSeconds != null &&
                         fieldWidth != null;
     }
 }

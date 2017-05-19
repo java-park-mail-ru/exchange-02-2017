@@ -1,5 +1,6 @@
 package com.cyclic.services;
 
+import com.cyclic.models.base.ScoreBoard;
 import com.cyclic.models.base.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
@@ -23,10 +24,12 @@ import java.util.Map;
 @Transactional
 public class AccountServiceDB implements AccountService {
 
+    public static final int HIGHSCORE_FOR_PAGE = 10;
+
     final private JdbcTemplate template;
     private final RowMapper<User> userMapper = (rs, num) -> {
         final long id = rs.getInt("id");
-        final long highScore = rs.getInt("highScore");
+        final long highScore = rs.getLong("highScore");
         final String login = rs.getString("login");
         final String email = rs.getString("email");
         final String password = rs.getString("password");
@@ -67,19 +70,37 @@ public class AccountServiceDB implements AccountService {
     }
 
     @Override
-    public int updateUserHighscore(Long id, long score) {
+    public int updateUserHighscore(Long userId, long score) {
         String query = new StringBuilder()
                 .append("UPDATE users SET highScore = ? ")
                 .append("WHERE id = ? ;")
                 .toString();
         try {
-            template.update(query, id, score);
+            template.update(query, userId, score);
         } catch (DuplicateKeyException e) {
             return ERROR_DUPLICATE;
         } catch (DataAccessException e) {
             return ERROR_UNDEFINED;
         }
         return OK;
+    }
+
+    @Override
+    public ScoreBoard getScoreBoard(long page) {
+
+        String query = new StringBuilder()
+                .append("SELECT * FROM users ORDER BY highScore DESC LIMIT ")
+                .append(HIGHSCORE_FOR_PAGE)
+                .append(" OFFSET ")
+                .append(HIGHSCORE_FOR_PAGE * (page - 1))
+                .toString();
+
+        try {
+            List<User> users = template.query(query, userMapper);
+            return new ScoreBoard(users, page);
+        } catch (DataAccessException e) {
+            return null;
+        }
     }
 
     public User getUserByLogin(String login) {

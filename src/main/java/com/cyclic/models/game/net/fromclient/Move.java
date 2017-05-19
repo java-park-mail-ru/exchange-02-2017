@@ -52,4 +52,12 @@ public class Move {
     public void setUnitsCount(Integer unitsCount) {
         this.unitsCount = unitsCount;
     }
+
+    public boolean isValid() {
+        return xfrom != null &&
+                yfrom != null &&
+                xto != null &&
+                yto != null &&
+                unitsCount != null;
+    }
 }

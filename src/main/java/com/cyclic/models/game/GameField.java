@@ -26,8 +26,10 @@ public class GameField {
     private transient Vector<Point> freePoints;
     private transient Room room;
 
-    public GameField(Room room, int height, int width) {
+    public GameField(Room room) {
         this.room = room;
+        this.height = room.getFieldHeight();
+        this.width = room.getFieldWidth();
         world = new Node[height][width];
         freePoints = new Vector<>();
         for (int i = 0; i < width; i++) {
@@ -35,8 +37,6 @@ public class GameField {
                 freePoints.add(new Point(i, j));
             }
         }
-        this.height = height;
-        this.width = width;
     }
 
     public Node getByPosition(int x, int y) {
@@ -338,9 +338,11 @@ public class GameField {
     public MoveBroadcast acceptMove(Player player, Move move) {
         Node my = getByPosition(move.getXfrom(), move.getYfrom());
         Node target = getByPosition(move.getXto(), move.getYto());
+        int moveRadius = (int) Math.sqrt((move.getXto() - move.getXfrom()) * (move.getXto() - move.getXfrom()) +
+                        (move.getYto() - move.getYfrom()) * (move.getYto() - move.getYfrom()));
         MoveBroadcast moveBroadcast = null;
 
-        if (my != target && checkTurn(my)) {
+        if (my != target && checkTurn(my) && moveRadius <= room.getMoveRadius()) {
             if (target == null) {
                 moveBroadcast = playerMoveFree(player, my, move);
             } else if (checkTurn(target)) {

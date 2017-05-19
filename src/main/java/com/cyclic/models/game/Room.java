@@ -13,6 +13,8 @@ import com.google.gson.GsonBuilder;
 
 import java.awt.*;
 import java.util.HashSet;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.Vector;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -32,9 +34,12 @@ public class Room {
     private transient int startTowerUnits;
     private transient int bonusMinValue;
     private transient int bonusMaxValue;
+
+    private double moveRadius;
+    private double moveTimeSeconds;
     private int fieldWidth;
     private int fieldHeight;
-    private Vector<Player> players;
+    private final Vector<Player> players;
     private Long pid;
     private Enums.RoomStatus status;
     private long roomID;
@@ -45,6 +50,8 @@ public class Room {
     private transient Vector<Integer> freeColors;
     private transient RoomConfig roomConfig;
     private transient RoomManager roomManager;
+    private transient Timer moveTimer;
+    private transient MoveTimerTask moveTimerTask;
 
 
     public Room(long roomID, RoomManager roomManager, RoomConfig roomConfig) {
@@ -58,6 +65,10 @@ public class Room {
         bonusMinValue = roomConfig.getBonusMinValue();
         fieldHeight = roomConfig.getFieldHeight();
         fieldWidth = roomConfig.getFieldWidth();
+        moveRadius = roomConfig.getMoveRadius();
+        moveTimeSeconds = roomConfig.getMoveTimeSeconds();
+        moveTimer = new Timer();
+        moveTimerTask = new MoveTimerTask();
 
         freeColors = new Vector<>(capacity);
         for (int i = 0; i < capacity; i++) {
@@ -65,7 +76,7 @@ public class Room {
         }
         status = STATUS_CREATING;
         players = new Vector<>(capacity);
-        field = new GameField(this, fieldHeight, fieldWidth);
+        field = new GameField(this);
         gson = new GsonBuilder().create();
         pid = null;
     }
@@ -125,8 +136,10 @@ public class Room {
                 pid = players.get(performingPlayerIndex).getId();
                 broadcastRoomUpdate();
                 field.addAndBroadcastRandomBonuses(startBonusCount);
+                moveTimer.schedule(moveTimerTask, (long) moveTimeSeconds * 1000);
             }
-            broadcastRoomUpdate();
+            else
+                broadcastRoomUpdate();
         });
         thread.start();
 
@@ -183,33 +196,47 @@ public class Room {
      * @param data Data to broadcast
      */
     public void broadcast(String data) {
-        for (Player player : players) {
+        players.forEach(player -> {
             player.sendString(data);
-        }
+        });
     }
 
     /**
      * If {@param move} is null, it will say, that user timed out it's move and meth
      */
     // TODO Handle move is null, then just pass move to another player and notify other players about it
-    public void acceptMove(Player player, Move move) {
-        if (status == STATUS_PLAYING && field != null && pid.equals(player.getId())) {
-            MoveBroadcast moveBroadcast = field.acceptMove(player, move);
-            if (moveBroadcast == null) {
-                player.disconnectBadApi("Your are moving like an asshole");
-                return;
+    public synchronized void acceptMove(Player player, Move move) {
+        if (status == STATUS_PLAYING) {
+            if (pid.equals(player.getId())) {
+                moveTimer.cancel();
+                MoveBroadcast moveBroadcast;
+                // Handle timeout
+                if (move == null) {
+                    moveBroadcast = new MoveBroadcast();
+                    moveBroadcast.setResult(Enums.MoveResult.ACCEPT_TIMEOUT);
+                }
+                else {
+                    moveBroadcast = field.acceptMove(player, move);
+                    if (moveBroadcast == null) {
+                        player.disconnectBadApi("Your are moving like an asshole");
+                        return;
+                    }
+                }
+                moveBroadcast.setPid(pid);
+                performingPlayerIndex += 1;
+                performingPlayerIndex %= capacity;
+                pid = players.get(performingPlayerIndex).getId();
+                moveBroadcast.setNextpid(pid);
+                players.forEach(p -> {
+                    moveBroadcast.addScores(new PlayerScore(p.getId(), p.getUnits(), p.towersCount()));
+                });
+                broadcast(gson.toJson(moveBroadcast));
+                moveTimer = new Timer();
+                moveTimerTask = new MoveTimerTask();
+                moveTimer.schedule(moveTimerTask, (long) moveTimeSeconds * 1000);
             }
-            moveBroadcast.setPid(pid);
-            performingPlayerIndex += 1;
-            performingPlayerIndex %= capacity;
-            pid = players.get(performingPlayerIndex).getId();
-            moveBroadcast.setNextpid(pid);
-            players.forEach(p -> {
-                moveBroadcast.addScores(new PlayerScore(p.getId(), p.getUnits(), p.towersCount()));
-            });
-            broadcast(gson.toJson(moveBroadcast));
         } else {
-            player.disconnectBadApi("Cannot accept. It is not your move.");
+            player.disconnectBadApi("Cannot accept move. Room is not playing");
         }
     }
 
@@ -227,6 +254,10 @@ public class Room {
 
     public int getStartTowerUnits() {
         return startTowerUnits;
+    }
+
+    public double getMoveRadius() {
+        return moveRadius;
     }
 
     public int getBonusMinValue() {
@@ -255,5 +286,17 @@ public class Room {
                 return player;
         }
         return null;
+    }
+
+    public Enums.RoomStatus getStatus() {
+        return status;
+    }
+
+    private class MoveTimerTask extends TimerTask {
+
+        @Override
+        public void run() {
+            acceptMove(getPlayer(pid),null);
+        }
     }
 }

@@ -43,6 +43,7 @@ public class Enums {
     public enum MoveResult {
         ACCEPT_OK,
         ACCEPT_WIN,
-        ACCEPT_LOSE
+        ACCEPT_LOSE,
+        ACCEPT_TIMEOUT
     }
 }

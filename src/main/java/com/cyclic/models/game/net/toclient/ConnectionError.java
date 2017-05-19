@@ -17,4 +17,8 @@ public class ConnectionError {
         this.reasonCode = reasonCode;
         this.reason = reason;
     }
+
+    public String getReason() {
+        return reason;
+    }
 }

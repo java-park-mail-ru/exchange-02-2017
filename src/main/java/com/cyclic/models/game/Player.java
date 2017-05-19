@@ -90,6 +90,10 @@ public class Player {
         return webSocketSession;
     }
 
+    public void setWebSocketSession(WebSocketSession webSocketSession) {
+        this.webSocketSession = webSocketSession;
+    }
+
     public void disconnect(Enums.DisconnectReason code, String data) {
         sendString(gson.toJson(new ConnectionError(code, data)));
         try {

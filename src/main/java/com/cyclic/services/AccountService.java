@@ -1,5 +1,6 @@
 package com.cyclic.services;
 
+import com.cyclic.models.base.ScoreBoard;
 import com.cyclic.models.base.User;
 import org.springframework.stereotype.Service;
 
@@ -21,7 +22,9 @@ public interface AccountService {
 
     User getUserById(Long id);
 
-    int updateUserHighscore(Long id, long score);
+    int updateUserHighscore(Long userId, long score);
+
+    ScoreBoard getScoreBoard(long page);
 
     User getUserByLogin(String login);
 

@@ -1,9 +1,10 @@
 package com.cyclic;
 
+import com.cyclic.configs.Enums;
 import com.cyclic.configs.RoomConfig;
 import com.cyclic.models.game.Player;
 import com.cyclic.models.game.Room;
-import com.cyclic.models.game.net.fromclient.HelloMessage;
+import com.cyclic.models.game.net.toclient.ConnectionError;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.junit.Test;
@@ -23,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 /**
  * Created by serych on 27.04.17.
@@ -65,19 +67,34 @@ public class GameProcessTest {
     @Test
     public void testGameplayKillNode() {
         Room room = new Room(0, null, roomConfig);
-        Player player1 = new Player(new TestWebSocketSession(message -> {
-            Gson gson = new GsonBuilder().create();
-            Room rroom = gson.fromJson(message, Room.class);
-            HelloMessage helloMessage = gson.fromJson(message, HelloMessage.class);
-
-        }), "Lalke", 0);
+        Player player1 = createTestPlayer("Lalke", 0);
         room.addPlayer(player1);
-        Player player2 = new Player(new TestWebSocketSession(message -> {
-            Gson gson = new GsonBuilder().create();
-            Room qwe = gson.fromJson(message, Room.class);
-            assertEquals(room.getRoomID(), qwe.getRoomID());
-        }), "Lalke", 0);
+        assertEquals(1, room.getPlayersCount());
+        Player player2 = createTestPlayer("Kopalke", 1);
         room.addPlayer(player2);
+        assertEquals(2, room.getPlayersCount());
+    }
+
+    private Player createTestPlayer(String userName, int id) {
+        Player player = new Player(null, userName, id);
+        WebSocketSession webSocketSession = new TestWebSocketSession(message -> {
+            Gson gson = new GsonBuilder().create();
+            Room room = gson.fromJson(message, Room.class);
+            if (room != null) {
+                //player.sendString("{\"action\":\"ACTION_GIVE_ME_ROOM\"");
+                // Make first move
+                if (room.getStatus() == Enums.RoomStatus.STATUS_PLAYING && room.getPid() == player.getId()) {
+                    player.sendString("{\"move\":{\"xfrom\":3,\"yfrom\":19,\"xto\":4,\"yto\":18,\"unitsCount\":50},\"action\":\"ACTION_GAME_MOVE\"}");
+                }
+            }
+            ConnectionError connectionError = gson.fromJson(message, ConnectionError.class);
+            if (connectionError != null) {
+                System.out.println(connectionError.getReason());
+                assertNotEquals(null, connectionError);
+            }
+        });
+        player.setWebSocketSession(webSocketSession);
+        return player;
     }
 
     interface MessageWait {
