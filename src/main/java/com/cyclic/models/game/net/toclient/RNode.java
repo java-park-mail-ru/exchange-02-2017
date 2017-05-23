@@ -1,6 +1,5 @@
 package com.cyclic.models.game.net.toclient;
 
-import com.cyclic.Application;
 import com.cyclic.services.game.RoomManager;
 
 /**

@@ -1,7 +1,5 @@
 package com.cyclic.models.game.net.toclient;
 
-import com.cyclic.models.game.Node;
-
 /**
  * Created by serych on 15.05.17.
  */

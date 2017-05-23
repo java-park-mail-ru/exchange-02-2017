@@ -45,7 +45,7 @@ public class User {
         this.highScore = highScore;
     }
 
-    public User(Long id,String firstName,String lastName,String email,String login,String password) {
+    public User(Long id, String firstName, String lastName, String email, String login, String password) {
         this.id = id;
         this.login = login;
         this.firstName = firstName;

@@ -6,8 +6,8 @@ import com.cyclic.models.game.net.toclient.NodesLink;
 import com.cyclic.models.game.net.toclient.PlayerScore;
 import com.cyclic.models.game.net.toclient.RNode;
 
+import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.Vector;
 
 import static com.cyclic.configs.Enums.Datatype.DATATYPE_PLAYERMOVE;
 
@@ -21,40 +21,40 @@ public class MoveBroadcast {
     private long nextpid;
     private Long deadpid = null;
     private Enums.MoveResult result;
-    private Vector<PlayerScore> scores;
-    private Vector<Node> valueUpdate;
-    private Vector<Node> newNodes;
-    private Vector<RNode> removedNodes;
-    private Vector<NodesLink> newLinks;
-    private Vector<NodesLink> removedLinks;
+    private ArrayList<PlayerScore> scores;
+    private ArrayList<Node> valueUpdate;
+    private ArrayList<Node> newNodes;
+    private ArrayList<RNode> removedNodes;
+    private ArrayList<NodesLink> newLinks;
+    private ArrayList<NodesLink> removedLinks;
 
     public void addScores(PlayerScore score) {
         if (scores == null)
-            scores = new Vector<>();
+            scores = new ArrayList<>();
         scores.add(score);
     }
 
     public void addValueUpdate(Node node) {
         if (valueUpdate == null)
-            valueUpdate = new Vector<>();
+            valueUpdate = new ArrayList<>();
         valueUpdate.add(node);
     }
 
     public void addNewNode(Node node) {
         if (newNodes == null)
-            newNodes = new Vector<>();
+            newNodes = new ArrayList<>();
         newNodes.add(node);
     }
 
     public void addRemovedNode(RNode node) {
         if (removedNodes == null)
-            removedNodes = new Vector<>();
+            removedNodes = new ArrayList<>();
         removedNodes.add(node);
     }
 
     public void addNewLink(NodesLink link) {
         if (newLinks == null)
-            newLinks = new Vector<>();
+            newLinks = new ArrayList<>();
         newLinks.add(link);
     }
 
@@ -64,7 +64,7 @@ public class MoveBroadcast {
 
     public void addRemovedLink(NodesLink link) {
         if (removedLinks == null)
-            removedLinks = new Vector<>();
+            removedLinks = new ArrayList<>();
         removedLinks.add(link);
     }
 
@@ -101,11 +101,11 @@ public class MoveBroadcast {
         this.result = result;
     }
 
-    public void setRemovedNodes(Vector<RNode> removedNodes) {
+    public void setRemovedNodes(ArrayList<RNode> removedNodes) {
         this.removedNodes = removedNodes;
     }
 
-    public void setRemovedLinks(Vector<NodesLink> removedLinks) {
+    public void setRemovedLinks(ArrayList<NodesLink> removedLinks) {
         this.removedLinks = removedLinks;
     }
 

@@ -10,9 +10,9 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Vector;
 
 import static com.cyclic.configs.Enums.DisconnectReason.DISCONNECT_REASON_API_HACKER;
 
@@ -141,20 +141,20 @@ public class Player {
         return nodesMap;
     }
 
-    public Vector<Node> getNodes() {
-        Vector<Node> vector = new Vector<>();
+    public ArrayList<Node> getNodes() {
+        ArrayList<Node> ArrayList = new ArrayList<>();
         nodesMap.forEach((node, nodes) -> {
-            vector.add(node);
+            ArrayList.add(node);
         });
-        return vector;
+        return ArrayList;
     }
 
-    public Vector<RNode> getReducedNodes() {
-        Vector<RNode> vector = new Vector<>();
+    public ArrayList<RNode> getReducedNodes() {
+        ArrayList<RNode> ArrayList = new ArrayList<>();
         nodesMap.forEach((node, nodes) -> {
-            vector.add(node.getReduced());
+            ArrayList.add(node.getReduced());
         });
-        return vector;
+        return ArrayList;
     }
 
     public void addToUnits(int count) {

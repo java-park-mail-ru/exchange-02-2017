@@ -3,7 +3,7 @@ package com.cyclic.models.game.net.toclient.broadcast;
 import com.cyclic.configs.Enums;
 import com.cyclic.models.game.Node;
 
-import java.util.Vector;
+import java.util.ArrayList;
 
 import static com.cyclic.configs.Enums.Datatype.DATATYPE_NEWBONUS;
 
@@ -12,9 +12,9 @@ import static com.cyclic.configs.Enums.Datatype.DATATYPE_NEWBONUS;
  */
 public class NewBonusBroadcast {
     private final Enums.Datatype datatype = DATATYPE_NEWBONUS;
-    private Vector<Node> bonuses;
+    private ArrayList<Node> bonuses;
 
-    public NewBonusBroadcast(Vector<Node> bonuses) {
+    public NewBonusBroadcast(ArrayList<Node> bonuses) {
         this.bonuses = bonuses;
     }
 }

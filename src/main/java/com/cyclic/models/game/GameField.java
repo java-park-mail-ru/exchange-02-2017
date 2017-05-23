@@ -10,10 +10,10 @@ import com.sun.istack.internal.NotNull;
 import com.sun.istack.internal.Nullable;
 
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Stack;
-import java.util.Vector;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static com.cyclic.configs.Enums.MoveResult.*;
@@ -24,7 +24,7 @@ import static com.cyclic.configs.Enums.MoveResult.*;
 public class GameField {
     private transient int height, width;
     private transient Node[][] world;
-    private transient Vector<Point> freePoints;
+    private transient ArrayList<Point> freePoints;
     private transient Room room;
 
     public GameField(Room room) {
@@ -32,7 +32,7 @@ public class GameField {
         this.height = room.getFieldHeight();
         this.width = room.getFieldWidth();
         world = new Node[height][width];
-        freePoints = new Vector<>();
+        freePoints = new ArrayList<>();
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++) {
                 freePoints.add(new Point(i, j));
@@ -57,7 +57,7 @@ public class GameField {
     }
 
     public void addAndBroadcastRandomBonuses(int count) {
-        Vector<Node> bonuses = new Vector<>();
+        ArrayList<Node> bonuses = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             Point point = findRandomNullPoint();
             if (point == null)
@@ -164,7 +164,7 @@ public class GameField {
         } catch (ArrayIndexOutOfBoundsException ignored) {
         }
 
-        Vector<Node> kostyl = new Vector<>(4);
+        ArrayList<Node> kostyl = new ArrayList<>(4);
         kostyl.add(left);
         kostyl.add(right);
         kostyl.add(top);
@@ -282,7 +282,7 @@ public class GameField {
             return null;
         world[node.getY()][node.getX()] = null;
         if (node.isBonus()) {
-            Vector<RNode> deleteNodes = new Vector<>();
+            ArrayList<RNode> deleteNodes = new ArrayList<>();
             deleteNodes.add(node.getReduced());
             return new NodesAndLinks(deleteNodes, null);
         } else {
@@ -292,23 +292,23 @@ public class GameField {
             // If killed main player's node
             // Remove player from game
             if (player.getMainNode() == node) {
-                Vector<RNode> deleteNodes = player.getReducedNodes();
+                ArrayList<RNode> deleteNodes = player.getReducedNodes();
                 deleteNodes.forEach(n -> setNodeToPosition(n.getX(), n.getY(), null));
                 HashSet<NodesLink> deletedLinks = new HashSet<>();
                 nodesMap.forEach((n1, nodes) -> {
                     nodes.forEach(n2 -> deletedLinks.add(new NodesLink(n1.getReduced(), n2.getReduced())));
                 });
-                Vector<NodesLink> linksv = new Vector<>();
+                ArrayList<NodesLink> linksv = new ArrayList<>();
                 linksv.addAll(deletedLinks);
                 if (linksv.isEmpty())
                     linksv = null;
                 return new NodesAndLinks(deleteNodes, linksv);
             }
 
-            Vector<RNode> deleteNodes = new Vector<>();
+            ArrayList<RNode> deleteNodes = new ArrayList<>();
             HashSet<NodesLink> deletedLinks = new HashSet<>();
 
-            // Add THIS node to returning vectors
+            // Add THIS node to returning ArrayLists
             deleteNodes.add(node.getReduced());
             nodesMap.get(node).forEach(n -> {
                 deletedLinks.add(new NodesLink(node.getReduced(), n.getReduced()));
@@ -344,7 +344,7 @@ public class GameField {
             }
             // DFS
 
-            // Add to returning vectors not visited nodes and their links
+            // Add to returning ArrayLists not visited nodes and their links
             visitedNodes.forEach((n, visited) -> {
                 if (!visited) {
                     for (Node v : nodesMap.get(n)) {
@@ -357,8 +357,8 @@ public class GameField {
                 }
             });
 
-            // Return vector instead of set
-            Vector<NodesLink> linksv = new Vector<>();
+            // Return ArrayList instead of set
+            ArrayList<NodesLink> linksv = new ArrayList<>();
             linksv.addAll(deletedLinks);
             if (linksv.isEmpty())
                 linksv = null;
@@ -398,19 +398,19 @@ public class GameField {
     }
 
     private class NodesAndLinks {
-        Vector<RNode> nodes;
-        Vector<NodesLink> links;
+        ArrayList<RNode> nodes;
+        ArrayList<NodesLink> links;
 
-        public NodesAndLinks(Vector<RNode> nodes, Vector<NodesLink> links) {
+        public NodesAndLinks(ArrayList<RNode> nodes, ArrayList<NodesLink> links) {
             this.nodes = nodes;
             this.links = links;
         }
 
-        public Vector<RNode> getNodes() {
+        public ArrayList<RNode> getNodes() {
             return nodes;
         }
 
-        public Vector<NodesLink> getLinks() {
+        public ArrayList<NodesLink> getLinks() {
             return links;
         }
     }

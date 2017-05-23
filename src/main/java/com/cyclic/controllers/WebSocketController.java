@@ -3,12 +3,12 @@ package com.cyclic.controllers;
 import com.cyclic.LOG;
 import com.cyclic.models.base.User;
 import com.cyclic.models.game.Player;
-import com.cyclic.models.game.net.toclient.HelloMessage;
 import com.cyclic.models.game.net.fromclient.WebSocketAnswer;
 import com.cyclic.models.game.net.toclient.ConnectionError;
+import com.cyclic.models.game.net.toclient.HelloMessage;
 import com.cyclic.services.AccountServiceDB;
-import com.cyclic.services.game.SessionManager;
 import com.cyclic.services.game.RoomManager;
+import com.cyclic.services.game.SessionManager;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
@@ -124,8 +124,7 @@ public class WebSocketController extends TextWebSocketHandler {
                     default:
                         player.disconnectBadApi("Unknown actionCode");
                 }
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 LOG.errorConsole(e);
             }
         } else {

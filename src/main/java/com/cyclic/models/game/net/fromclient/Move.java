@@ -1,12 +1,12 @@
 package com.cyclic.models.game.net.fromclient;
 
 
-import java.util.Vector;
+import com.cyclic.models.game.AbstractMove;
 
 /**
  * Created by serych on 03.04.17.
  */
-public class Move {
+public class Move extends AbstractMove {
     private Integer xfrom;
     private Integer yfrom;
     private Integer xto;

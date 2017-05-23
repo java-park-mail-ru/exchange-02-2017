@@ -6,7 +6,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * Created by serych on 27.04.17.
  */
 @ConfigurationProperties(prefix = "game.room")
-public class RoomConfig implements Cloneable{
+public class RoomConfig implements Cloneable {
     private Integer playersCount;
     private Integer startBonusCount;
     private Integer startTowerUnits;

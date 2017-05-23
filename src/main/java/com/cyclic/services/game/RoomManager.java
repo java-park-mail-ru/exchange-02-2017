@@ -54,7 +54,8 @@ public class RoomManager {
 
     /**
      * Very important method! Finds a room for a player and starts room if it is full
-     * @param player Player to find a room
+     *
+     * @param player       Player to find a room
      * @param roomCapacity Desired capacity of the room. Unnecessary param.
      */
     public synchronized void findRoomForThisGuy(Player player, Integer roomCapacity) {
@@ -88,8 +89,7 @@ public class RoomManager {
         if (room.isFull()) {
             freeRooms[roomCapacity - 2] = new Room(lastRoomId, this, room.getRoomConfig());
             broadcast.getRoomData(roomCapacity).setQueue(0);
-        }
-        else
+        } else
             broadcast.getRoomData(roomCapacity).setQueue(room.getPlayersCount());
         json = Application.gson.toJson(broadcast);
         playersWithNoRoom.forEach(p -> {

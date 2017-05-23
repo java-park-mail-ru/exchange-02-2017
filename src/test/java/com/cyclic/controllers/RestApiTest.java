@@ -17,7 +17,8 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.Random;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 /**
@@ -38,16 +39,16 @@ public class RestApiTest {
     private String password;
 
     @NotNull
-    private String getRandomString(int len ){
+    private String getRandomString(int len) {
         String chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-        StringBuilder sb = new StringBuilder( len );
-        for( int i = 0; i < len; i++ )
-            sb.append( chars.charAt( rand.nextInt(chars.length()) ) );
+        StringBuilder sb = new StringBuilder(len);
+        for (int i = 0; i < len; i++)
+            sb.append(chars.charAt(rand.nextInt(chars.length())));
         return sb.toString();
     }
 
     @NotNull
-    private String getRandomEmail(){
+    private String getRandomEmail() {
         return new StringBuilder()
                 .append(getRandomString(3))
                 .append("@")
@@ -57,7 +58,7 @@ public class RestApiTest {
     }
 
     @Before
-    public void setFields(){
+    public void setFields() {
         email = getRandomEmail();
         login = getRandomString(8);
         password = getRandomString(8);
@@ -78,7 +79,7 @@ public class RestApiTest {
         assertNotNull(result.getBody());
     }
 
-    private void logout(String cookie){
+    private void logout(String cookie) {
         HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.COOKIE, cookie);
         HttpEntity request = new HttpEntity(headers);
@@ -94,7 +95,7 @@ public class RestApiTest {
         return restTemplate.exchange("/api/user", HttpMethod.GET, request, User.class);
     }
 
-    private void updateUser(String cookie, User user, HttpStatus expectedHttpStatus){
+    private void updateUser(String cookie, User user, HttpStatus expectedHttpStatus) {
         HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.COOKIE, cookie);
         HttpEntity<User> request = new HttpEntity<>(user, headers);
@@ -104,7 +105,7 @@ public class RestApiTest {
     }
 
     @Test
-    public void authTest(){
+    public void authTest() {
         User user = new User(email, login, password);
 
         //without registration
@@ -118,7 +119,7 @@ public class RestApiTest {
     }
 
     @Test
-    public void registrationTest(){
+    public void registrationTest() {
         User user;
 
         //incorrect fields
@@ -139,7 +140,7 @@ public class RestApiTest {
     }
 
     @Test
-    public void getCurrentUserTest(){
+    public void getCurrentUserTest() {
         User user = new User(email, login, password);
 
         registration(user, HttpStatus.OK);
@@ -153,7 +154,7 @@ public class RestApiTest {
     }
 
     @Test
-    public void getUserByIdTest(){
+    public void getUserByIdTest() {
         User user1 = new User(email, login, password);
         registration(user1, HttpStatus.OK);
         setFields();
@@ -179,7 +180,7 @@ public class RestApiTest {
     }
 
     @Test
-    public void changeUserTest(){
+    public void changeUserTest() {
         User user = new User(email, login, password);
         registration(user, HttpStatus.OK);
         String cookie = login(user, HttpStatus.OK).getHeaders().get(HttpHeaders.SET_COOKIE).get(0);
@@ -189,10 +190,10 @@ public class RestApiTest {
         String newLogin = getRandomString(8);
         String newPassword = getRandomString(8);
 
-        userForUpdate = new User(newEmail, null,null);
+        userForUpdate = new User(newEmail, null, null);
         updateUser(cookie, userForUpdate, HttpStatus.OK);
 
-        userForUpdate = new User(null, newLogin,null);
+        userForUpdate = new User(null, newLogin, null);
         updateUser(cookie, userForUpdate, HttpStatus.OK);
 
         userForUpdate = new User(null, null, newPassword);

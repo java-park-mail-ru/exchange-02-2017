@@ -43,7 +43,7 @@ public class Room {
     private transient int performingPlayerIndex;
     private transient Gson gson;
     private transient GameField field;
-    private transient Vector<Integer> freeColors;
+    private transient ArrayList<Integer> freeColors;
     private transient RoomConfig roomConfig;
     private transient RoomManager roomManager;
     private transient Timer moveTimer;
@@ -66,7 +66,7 @@ public class Room {
         moveTimer = new Timer();
         moveTimerTask = new MoveTimerTask();
 
-        freeColors = new Vector<>(capacity);
+        freeColors = new ArrayList<>(capacity);
         for (int i = 0; i < capacity; i++) {
             freeColors.add(i);
         }
@@ -204,21 +204,22 @@ public class Room {
      * If {@param move} is null, it will say, that user timed out it's move and meth
      */
     // TODO Handle move is null, then just pass move to another player and notify other players about it
-    public synchronized void acceptMove(Player player, Move move) {
+    public synchronized void acceptMove(Player player, AbstractMove move) {
         if (status == STATUS_PLAYING) {
             if (pid.equals(player.getId())) {
                 moveTimer.cancel();
-                MoveBroadcast moveBroadcast;
+                MoveBroadcast moveBroadcast = null;
                 // Handle timeout
-                if (move == null) {
+                if (move instanceof TimeoutMove) {
                     moveBroadcast = new MoveBroadcast();
                     moveBroadcast.setResult(Enums.MoveResult.ACCEPT_TIMEOUT);
-                } else {
-                    moveBroadcast = field.acceptMove(player, move);
-                    if (moveBroadcast == null) {
-                        player.disconnectBadApi("You cannot move like this");
-                        return;
-                    }
+                }
+                if (move instanceof Move) {
+                    moveBroadcast = field.acceptMove(player, (Move) move);
+                }
+                if (moveBroadcast == null) {
+                    player.disconnectBadApi("You cannot move like this");
+                    return;
                 }
                 moveBroadcast.setPid(pid);
                 generateNextPid();
@@ -227,9 +228,9 @@ public class Room {
                 }
                 moveBroadcast.setNextpid(pid);
 
-                players.forEach(p -> {
+                for (Player p : players) {
                     moveBroadcast.addScores(new PlayerScore(p.getId(), p.getUnits(), p.towersCount()));
-                });
+                }
                 moveBroadcast.sortScores();
                 broadcast(gson.toJson(moveBroadcast));
                 if (moveBroadcast.getDeadpid() != null) {

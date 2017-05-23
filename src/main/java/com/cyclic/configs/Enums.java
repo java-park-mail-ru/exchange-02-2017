@@ -28,7 +28,7 @@ public class Enums {
     }
 
     // DISCONNECT Reasons
-    public enum DisconnectReason{
+    public enum DisconnectReason {
         DISCONNECT_REASON_API_HACKER,
         DISCONNECT_REASON_NOT_LOGINED
     }

@@ -1,8 +1,6 @@
 package com.cyclic.configs;
 
 import com.cyclic.controllers.WebSocketController;
-import com.cyclic.services.AccountServiceDB;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;

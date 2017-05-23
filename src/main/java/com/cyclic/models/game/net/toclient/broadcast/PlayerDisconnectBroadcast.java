@@ -1,13 +1,7 @@
 package com.cyclic.models.game.net.toclient.broadcast;
 
 import com.cyclic.configs.Enums;
-import com.cyclic.models.game.Node;
 import com.cyclic.models.game.Player;
-import com.cyclic.models.game.net.toclient.NodesLink;
-import com.cyclic.models.game.net.toclient.RNode;
-
-import java.util.HashSet;
-import java.util.Vector;
 
 import static com.cyclic.configs.Enums.Datatype.DATATYPE_PLAYER_DISCONNECT;
 

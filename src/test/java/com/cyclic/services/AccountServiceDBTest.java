@@ -14,8 +14,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
-import static org.junit.Assert.*;
 
 /**
  * Created by algys on 26.03.17.
@@ -31,13 +32,13 @@ public class AccountServiceDBTest {
     private AccountServiceDB accountService;
 
     @Test
-    public void addUserTest(){
+    public void addUserTest() {
         User newUser = new User(null, null, null, "test@test.com", "test", "test");
         assertEquals(AccountService.OK, accountService.addUser(newUser));
     }
 
     @Test
-    public void addUserDuplicateTest(){
+    public void addUserDuplicateTest() {
         User newUser = new User(null, null, null, "test@test.com", "test", "test");
 
         assertEquals(AccountService.OK, accountService.addUser(newUser));
@@ -45,7 +46,7 @@ public class AccountServiceDBTest {
     }
 
     @Test
-    public void getUserByLoginTest(){
+    public void getUserByLoginTest() {
         User newUser = new User(null, null, null, "test@test.com", "test", "test");
         accountService.addUser(newUser);
         User user = accountService.getUserByLogin(newUser.getLogin());
@@ -53,7 +54,7 @@ public class AccountServiceDBTest {
     }
 
     @Test
-    public void getUserByIdTest(){
+    public void getUserByIdTest() {
         User newUser = new User(null, null, null, "test@test.com", "test", "test");
         accountService.addUser(newUser);
         long id = accountService.getUserByLogin(newUser.getLogin()).getId();
@@ -62,7 +63,7 @@ public class AccountServiceDBTest {
     }
 
     @Test
-    public void getUserByEmailTest(){
+    public void getUserByEmailTest() {
         User newUser = new User(null, null, null, "test@test.com", "test", "test");
         accountService.addUser(newUser);
         User user = accountService.getUserByEmail(newUser.getEmail());
@@ -70,7 +71,7 @@ public class AccountServiceDBTest {
     }
 
     @Test
-    public void setUserTest(){
+    public void setUserTest() {
         User newUser = new User(null, null, null, "test@test.com", "test", "test");
         accountService.addUser(newUser);
 
@@ -92,7 +93,7 @@ public class AccountServiceDBTest {
     }
 
     @Test
-    public void setUserDuplicateTest(){
+    public void setUserDuplicateTest() {
         User newUser1 = new User(null, null, null, "test@test.com", "test", "test");
         User newUser2 = new User(null, null, null, "test2@test.com", "test2", "test2");
         accountService.addUser(newUser1);
@@ -110,22 +111,22 @@ public class AccountServiceDBTest {
     }
 
     @Test
-    public void getUsersTest(){
+    public void getUsersTest() {
         List<User> users = new ArrayList<>();
-        for(int i=0; i<50; i++){
+        for (int i = 0; i < 50; i++) {
             String email = String.valueOf(i) + "@" + String.valueOf(i) + ".com";
             String login = String.valueOf(i);
             String password = String.valueOf(i);
-            User newUser = new User(null,null,null,email,login,password);
+            User newUser = new User(null, null, null, email, login, password);
             accountService.addUser(newUser);
             users.add(accountService.getUserByLogin(login));
         }
 
         int limit, offset;
         Random rand = new Random();
-        for(int k=0; k<10; k++) {
+        for (int k = 0; k < 10; k++) {
             offset = rand.nextInt(49);
-            limit = rand.nextInt(50-offset);
+            limit = rand.nextInt(50 - offset);
             List<User> test = accountService.getUsers(offset, limit);
             for (int i = 0; i < limit; i++) {
                 assertEquals(users.get(offset + i).getId(), test.get(i).getId());

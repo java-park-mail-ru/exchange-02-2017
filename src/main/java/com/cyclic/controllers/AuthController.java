@@ -1,6 +1,5 @@
 package com.cyclic.controllers;
 
-import com.cyclic.configs.HttpServerConfiguration;
 import com.cyclic.models.base.Status;
 import com.cyclic.models.base.User;
 import com.cyclic.services.AccountService;
@@ -9,7 +8,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpSession;
 
@@ -28,7 +30,7 @@ public class AuthController {
 
     @Autowired
     public AuthController(AccountServiceDB accountService,
-                          PasswordEncoder passwordEncoder){
+                          PasswordEncoder passwordEncoder) {
         this.accountService = accountService;
         this.passwordEncoder = passwordEncoder;
     }
@@ -38,16 +40,16 @@ public class AuthController {
         String login = body.getLogin();
         String password = body.getPassword();
 
-        if(login == null){
+        if (login == null) {
             return ResponseEntity.badRequest().body(new Status("incorrect login"));
         }
         login = login.trim();
 
         User user = accountService.getUserByLogin(login);
-        if(user == null){
+        if (user == null) {
             return ResponseEntity.badRequest().body(new Status("incorrect login"));
         }
-        if(!passwordEncoder.matches(password, user.getPassword())){
+        if (!passwordEncoder.matches(password, user.getPassword())) {
             return ResponseEntity.badRequest().body(new Status("incorrect password"));
         }
 
@@ -59,7 +61,7 @@ public class AuthController {
 
     @RequestMapping(method = RequestMethod.DELETE, produces = "application/json")
     public ResponseEntity exit(HttpSession httpSession) {
-        if(httpSession.getAttribute("userId")==null) {
+        if (httpSession.getAttribute("userId") == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new Status("user not authorized"));
         }
         httpSession.removeAttribute("userId");
