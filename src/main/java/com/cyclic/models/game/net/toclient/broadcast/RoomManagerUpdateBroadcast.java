@@ -1,9 +1,6 @@
-package com.cyclic.models.game.net.broadcast;
+package com.cyclic.models.game.net.toclient.broadcast;
 
 import com.cyclic.configs.Enums;
-
-import java.awt.*;
-import java.util.Vector;
 
 /**
  * Created by serych on 17.05.17.

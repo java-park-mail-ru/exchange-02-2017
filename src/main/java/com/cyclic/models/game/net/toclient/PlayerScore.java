@@ -13,4 +13,8 @@ public class PlayerScore {
         this.score = score;
         this.towers = towers;
     }
+
+    public long getScore() {
+        return score;
+    }
 }

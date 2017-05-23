@@ -19,7 +19,10 @@ public class HttpServerConfiguration extends WebMvcConfigurerAdapter {
                         "http://localhost:3000",
                         "https://cyclicgame.herokuapp.com",
                         "http://172.16.91.197:3000",
-                        "http://172.20.10.2:3000")
+                        "http://172.16.84.245:3000",
+                        "http://172.20.10.2:3000",
+                        "http://172.20.10.14:3000",
+                        "http://172.20.10.4:3000")
                 .allowedMethods("POST", "GET",  "PUT", "OPTIONS", "DELETE")
                 .allowedHeaders("Content-Type", "Origin", "X-Requested-With", "Accept")
                 .allowCredentials(true)

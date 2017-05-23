@@ -5,13 +5,15 @@ import com.cyclic.configs.ResourceManager;
 import com.cyclic.configs.RoomConfig;
 import com.cyclic.models.game.Player;
 import com.cyclic.models.game.Room;
-import com.cyclic.models.game.net.broadcast.RoomManagerUpdateBroadcast;
+import com.cyclic.models.game.net.toclient.broadcast.RoomManagerUpdateBroadcast;
+import com.cyclic.services.AccountService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.awt.*;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
+
+import static com.cyclic.configs.Enums.RoomStatus.STATUS_CREATING;
 
 /**
  * Created by serych on 02.04.17.
@@ -19,6 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 public class RoomManager {
     public static ResourceManager resourceManager;
+    public static AccountService accountService;
     private static RoomConfig mainRoomConfig;
     private ConcurrentHashMap<Player, Room> allRooms;
     private Vector<Player> playersWithNoRoom;
@@ -28,8 +31,9 @@ public class RoomManager {
     RoomManagerUpdateBroadcast broadcast;
 
     @Autowired
-    public RoomManager(ResourceManager resourceManager) {
+    public RoomManager(ResourceManager resourceManager, AccountService accountService) {
         RoomManager.resourceManager = resourceManager;
+        RoomManager.accountService = accountService;
         mainRoomConfig = resourceManager.getRoomConfig();
         allRooms = new ConcurrentHashMap<>();
         playersWithNoRoom = new Vector<>();
@@ -62,9 +66,9 @@ public class RoomManager {
             double koef = 0;
             roomCapacity = 2;
             for (int i = mainRoomConfig.getPlayersCount() - 2; i > 0; i--) {
-                if (freeRooms[i].getPlayersCount() / freeRooms[i].getCapacity() > koef) {
-                    roomCapacity = i;
-                    koef = freeRooms[i].getPlayersCount() / freeRooms[i].getCapacity();
+                if (((double) freeRooms[i].getPlayersCount()) / freeRooms[i].getCapacity() > koef) {
+                    roomCapacity = i + 2;
+                    koef = ((double) freeRooms[i].getPlayersCount()) / freeRooms[i].getCapacity();
                 }
             }
         }
@@ -106,10 +110,13 @@ public class RoomManager {
             player.setRoom(null);
             addPlayerWithNoRoom(player);
         }
-        Player lastPlayer = room.removePlayer(player);
-        if (lastPlayer != null) {
-            lastPlayer.setRoom(null);
-            addPlayerWithNoRoom(lastPlayer);
+        room.removePlayer(player, false);
+        if (room.getStatus() == STATUS_CREATING) {
+            broadcast.getRoomData(room.getCapacity()).setQueue(room.getPlayersCount());
+            json = Application.gson.toJson(broadcast);
+            playersWithNoRoom.forEach(p -> {
+                p.sendString(json);
+            });
         }
     }
 

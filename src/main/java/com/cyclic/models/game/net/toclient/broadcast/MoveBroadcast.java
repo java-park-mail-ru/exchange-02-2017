@@ -1,4 +1,4 @@
-package com.cyclic.models.game.net.broadcast;
+package com.cyclic.models.game.net.toclient.broadcast;
 
 import com.cyclic.configs.Enums;
 import com.cyclic.models.game.Node;
@@ -6,6 +6,7 @@ import com.cyclic.models.game.net.toclient.NodesLink;
 import com.cyclic.models.game.net.toclient.PlayerScore;
 import com.cyclic.models.game.net.toclient.RNode;
 
+import java.util.Comparator;
 import java.util.Vector;
 
 import static com.cyclic.configs.Enums.Datatype.DATATYPE_PLAYERMOVE;
@@ -18,6 +19,7 @@ public class MoveBroadcast {
     private final Enums.Datatype datatype = DATATYPE_PLAYERMOVE;
     private long pid;
     private long nextpid;
+    private Long deadpid = null;
     private Enums.MoveResult result;
     private Vector<PlayerScore> scores;
     private Vector<Node> valueUpdate;
@@ -66,6 +68,23 @@ public class MoveBroadcast {
         removedLinks.add(link);
     }
 
+    public void sortScores() {
+        scores.sort(new Comparator<PlayerScore>() {
+            @Override
+            public int compare(PlayerScore o1, PlayerScore o2) {
+                return (int) (o2.getScore() - o1.getScore());
+            }
+        });
+    }
+
+    public Long getDeadpid() {
+        return deadpid;
+    }
+
+    public void setDeadpid(Long deadpid) {
+        this.deadpid = deadpid;
+    }
+
     public void addRemovedLink(Node l, Node r) {
         addRemovedLink(new NodesLink(l.getReduced(), r.getReduced()));
     }
@@ -88,5 +107,9 @@ public class MoveBroadcast {
 
     public void setRemovedLinks(Vector<NodesLink> removedLinks) {
         this.removedLinks = removedLinks;
+    }
+
+    public Enums.MoveResult getResult() {
+        return result;
     }
 }

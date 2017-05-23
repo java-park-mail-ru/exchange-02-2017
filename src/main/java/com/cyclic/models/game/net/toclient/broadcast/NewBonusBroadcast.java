@@ -1,4 +1,4 @@
-package com.cyclic.models.game.net.broadcast;
+package com.cyclic.models.game.net.toclient.broadcast;
 
 import com.cyclic.configs.Enums;
 import com.cyclic.models.game.Node;

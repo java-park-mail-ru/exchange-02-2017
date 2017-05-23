@@ -2,25 +2,23 @@ package com.cyclic.models.game;
 
 import com.cyclic.configs.Enums;
 import com.cyclic.configs.RoomConfig;
-import com.cyclic.models.game.net.broadcast.MoveBroadcast;
-import com.cyclic.models.game.net.broadcast.PlayerDisconnectBroadcast;
-import com.cyclic.models.game.net.broadcast.RoomDestructionBroadcast;
 import com.cyclic.models.game.net.fromclient.Move;
 import com.cyclic.models.game.net.toclient.PlayerScore;
+import com.cyclic.models.game.net.toclient.broadcast.MoveBroadcast;
+import com.cyclic.models.game.net.toclient.broadcast.PlayerDisconnectBroadcast;
+import com.cyclic.models.game.net.toclient.broadcast.WinBroadcast;
 import com.cyclic.services.game.RoomManager;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import java.awt.*;
-import java.util.HashSet;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.Vector;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static com.cyclic.configs.Enums.Datatype.DATATYPE_ROOMINFO;
-import static com.cyclic.configs.Enums.Datatype.DATATYPE_YOU_LOSE;
-import static com.cyclic.configs.Enums.RoomStatus.*;
+import static com.cyclic.configs.Enums.Datatype.DATATYPE_YOU_LOSE_LEAVE_ROOM;
+import static com.cyclic.configs.Enums.RoomStatus.STATUS_CREATING;
+import static com.cyclic.configs.Enums.RoomStatus.STATUS_PLAYING;
 
 /**
  * Created by serych on 31.03.17.
@@ -28,18 +26,16 @@ import static com.cyclic.configs.Enums.RoomStatus.*;
 
 public class Room {
     private final Enums.Datatype datatype = DATATYPE_ROOMINFO;
-
+    private final Vector<Player> players;
     private int capacity;
     private transient int startBonusCount;
     private transient int startTowerUnits;
     private transient int bonusMinValue;
     private transient int bonusMaxValue;
-
     private double moveRadius;
     private double moveTimeSeconds;
     private int fieldWidth;
     private int fieldHeight;
-    private final Vector<Player> players;
     private Long pid;
     private Enums.RoomStatus status;
     private long roomID;
@@ -137,8 +133,7 @@ public class Room {
                 broadcastRoomUpdate();
                 field.addAndBroadcastRandomBonuses(startBonusCount);
                 moveTimer.schedule(moveTimerTask, (long) moveTimeSeconds * 1000);
-            }
-            else
+            } else
                 broadcastRoomUpdate();
         });
         thread.start();
@@ -150,35 +145,39 @@ public class Room {
      * @param player Player to remove from this room
      * @return If the last player in this room, give him another room
      */
-    public Player removePlayer(Player player) {
+    public synchronized void removePlayer(Player player, boolean duringMove) {
         if (players.remove(player)) {
             if (roomManager != null)
                 roomManager.addPlayerWithNoRoom(player);
             freeColors.add(player.getColor());
             if (status == STATUS_CREATING) {
                 broadcastRoomUpdate();
-                return null;
+                return;
             }
-            player.sendDatatype(DATATYPE_YOU_LOSE);
+            if (players.size() == 0) {
+                return;
+            }
             for (Node node : player.getNodesMap().keySet()) {
                 field.removeNode(node);
             }
-            if (getPlayersCount() > 1) {
-                broadcast(gson.toJson(new PlayerDisconnectBroadcast(player.getId())));
-                if (status == STATUS_PLAYING) {
-                    performingPlayerIndex %= capacity;
-                    pid = players.get(performingPlayerIndex).getId();
+            player.sendDatatype(DATATYPE_YOU_LOSE_LEAVE_ROOM);
+            if (getPlayersCount() > 1) { // Game did not ended
+                if (pid == player.getId()) {
+                    generateNextPid();
                 }
-                broadcastRoomUpdate();
-                return null;
-            } else {
-                broadcast(gson.toJson(new RoomDestructionBroadcast()));
-                if (getPlayersCount() == 1)
-                    return players.get(0);
+                if (!duringMove) {
+                    broadcast(gson.toJson(new PlayerDisconnectBroadcast(player, pid)));
+                }
+            } else { // Player WIN!!
+                if (moveTimer != null) {
+                    moveTimer.cancel();
+                }
+                Player lastPlayer = players.get(0);
+                lastPlayer.sendString(gson.toJson(new WinBroadcast()));
+                RoomManager.accountService.updateUserHighscore(lastPlayer.getId(), lastPlayer.getUnits());
+                removePlayer(lastPlayer, false);
             }
         }
-
-        return null;
     }
 
     /**
@@ -214,30 +213,44 @@ public class Room {
                 if (move == null) {
                     moveBroadcast = new MoveBroadcast();
                     moveBroadcast.setResult(Enums.MoveResult.ACCEPT_TIMEOUT);
-                }
-                else {
+                } else {
                     moveBroadcast = field.acceptMove(player, move);
                     if (moveBroadcast == null) {
-                        player.disconnectBadApi("Your are moving like an asshole");
+                        player.disconnectBadApi("You cannot move like this");
                         return;
                     }
                 }
                 moveBroadcast.setPid(pid);
-                performingPlayerIndex += 1;
-                performingPlayerIndex %= capacity;
-                pid = players.get(performingPlayerIndex).getId();
+                generateNextPid();
+                while (Objects.equals(pid, moveBroadcast.getDeadpid())) {
+                    generateNextPid();
+                }
                 moveBroadcast.setNextpid(pid);
+
                 players.forEach(p -> {
                     moveBroadcast.addScores(new PlayerScore(p.getId(), p.getUnits(), p.towersCount()));
                 });
+                moveBroadcast.sortScores();
                 broadcast(gson.toJson(moveBroadcast));
-                moveTimer = new Timer();
-                moveTimerTask = new MoveTimerTask();
-                moveTimer.schedule(moveTimerTask, (long) moveTimeSeconds * 1000);
+                if (moveBroadcast.getDeadpid() != null) {
+                    removePlayer(getPlayer(moveBroadcast.getDeadpid()), true);
+                }
+                if (getPlayersCount() != 0) {
+                    moveTimer = new Timer();
+                    moveTimerTask = new MoveTimerTask();
+                    moveTimer.schedule(moveTimerTask, (long) moveTimeSeconds * 1000);
+                }
+
             }
         } else {
             player.disconnectBadApi("Cannot accept move. Room is not playing");
         }
+    }
+
+    private void generateNextPid() {
+        performingPlayerIndex += 1;
+        performingPlayerIndex %= getPlayersCount();
+        pid = players.get(performingPlayerIndex).getId();
     }
 
     public Long getPid() {
@@ -296,7 +309,7 @@ public class Room {
 
         @Override
         public void run() {
-            acceptMove(getPlayer(pid),null);
+            acceptMove(getPlayer(pid), null);
         }
     }
 }

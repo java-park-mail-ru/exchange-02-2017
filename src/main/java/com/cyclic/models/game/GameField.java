@@ -1,18 +1,19 @@
 package com.cyclic.models.game;
 
 import com.cyclic.LOG;
-import com.cyclic.models.game.net.broadcast.MoveBroadcast;
-import com.cyclic.models.game.net.broadcast.NewBonusBroadcast;
 import com.cyclic.models.game.net.fromclient.Move;
 import com.cyclic.models.game.net.toclient.NodesLink;
 import com.cyclic.models.game.net.toclient.RNode;
+import com.cyclic.models.game.net.toclient.broadcast.MoveBroadcast;
+import com.cyclic.models.game.net.toclient.broadcast.NewBonusBroadcast;
 import com.sun.istack.internal.NotNull;
 import com.sun.istack.internal.Nullable;
-import com.sun.rowset.internal.Row;
 
-import javax.validation.constraints.Null;
 import java.awt.*;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Stack;
+import java.util.Vector;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static com.cyclic.configs.Enums.MoveResult.*;
@@ -48,9 +49,8 @@ public class GameField {
             LOG.error(new Exception("Cannot set node to position! Index is out of range!"));
         }
         if (node == null) {
-            freePoints.add(new Point(x,y));
-        }
-        else {
+            freePoints.add(new Point(x, y));
+        } else {
             freePoints.remove(new Point(x, y));
         }
         world[y][x] = node;
@@ -105,24 +105,6 @@ public class GameField {
         return node;
     }
 
-    private MoveBroadcast playerMoveFree(Player player, Node fromNode, Move move) {
-        int moveUnits = move.getUnitsCount();
-        if (!(moveUnits >= 1 && moveUnits < fromNode.getValue())) {
-            return null;
-        }
-        fromNode.addToValue(-moveUnits);
-
-        Node newNode = addNewTower(fromNode, player, moveUnits, move);
-
-        MoveBroadcast moveBroadcast = new MoveBroadcast();
-        moveBroadcast.setResult(ACCEPT_OK);
-        moveBroadcast.addNewNode(newNode);
-        moveBroadcast.addNewLink(fromNode, newNode);
-        moveBroadcast.addValueUpdate(fromNode);
-
-        return moveBroadcast;
-    }
-
     private MoveBroadcast playerMoveUnitsMove(Player player, Node fromNode, Node toNode, Move move) {
         int moveUnits = move.getUnitsCount();
         if (!(moveUnits >= 1 && moveUnits < fromNode.getValue())) {
@@ -139,24 +121,82 @@ public class GameField {
         return moveBroadcast;
     }
 
-    private MoveBroadcast playerMoveBonus(Player player, Node fromNode, Node bonus, Move move) {
+    private MoveBroadcast playerMoveFreeOrBonus(Player player, Node fromNode, Node bonus, Move move) {
         int moveUnits = move.getUnitsCount();
+        if (!(moveUnits >= 1 && moveUnits < fromNode.getValue())) {
+            return null;
+        }
         fromNode.addToValue(-moveUnits);
-        moveUnits += bonus.getValue();
 
+        if (bonus != null) {
+            player.addToUnits(bonus.getValue());
+            moveUnits += bonus.getValue();
+        }
         Node newNode = addNewTower(fromNode, player,
                 moveUnits, move);
-
+        if (bonus != null) {
+            addAndBroadcastRandomBonuses(1);
+        }
 
         MoveBroadcast moveBroadcast = new MoveBroadcast();
         moveBroadcast.setResult(ACCEPT_OK);
         moveBroadcast.addNewNode(newNode);
-        moveBroadcast.addNewLink(fromNode, newNode);
-        //moveBroadcast.addRemovedNode(newNode.getReduced());
         moveBroadcast.addValueUpdate(fromNode);
+
+        Node left = null;
+        Node right = null;
+        Node top = null;
+        Node bottom = null;
+        try {
+            left = getByPosition(newNode.getX() - 1, newNode.getY());
+        } catch (ArrayIndexOutOfBoundsException ignored) {
+        }
+        try {
+            right = getByPosition(newNode.getX() + 1, newNode.getY());
+        } catch (ArrayIndexOutOfBoundsException ignored) {
+        }
+        try {
+            top = getByPosition(newNode.getX(), newNode.getY() + 1);
+        } catch (ArrayIndexOutOfBoundsException ignored) {
+        }
+        try {
+            bottom = getByPosition(newNode.getX(), newNode.getY() - 1);
+        } catch (ArrayIndexOutOfBoundsException ignored) {
+        }
+
+        Vector<Node> kostyl = new Vector<>(4);
+        kostyl.add(left);
+        kostyl.add(right);
+        kostyl.add(top);
+        kostyl.add(bottom);
+        boolean standardMove = true;
+        for (int i = 0; i < 4; i += 2) {
+            Node a = kostyl.get(i);
+            Node b = kostyl.get(i + 1);
+            if (a != null &&
+                    b != null &&
+                    a.getPid() == b.getPid()) {
+                if (a.getPid() != 1)
+                    break;
+                if (a.getPid() == player.getId()) {
+                    standardMove = false;
+                    moveBroadcast.addRemovedLink(a, b);
+                    moveBroadcast.addNewLink(a, newNode);
+                    moveBroadcast.addNewLink(b, newNode);
+                } else {
+                    Player enemy = room.getPlayer(a.getPid());
+                    if (enemy.getNodesMap().get(a).contains(b)) {
+                        return null;
+                    }
+                }
+            }
+        }
+        if (standardMove)
+            moveBroadcast.addNewLink(fromNode, newNode);
 
         return moveBroadcast;
     }
+
 
     private MoveBroadcast playerMoveLink(Player player, Node fromNode, Node toNode, Move move) {
         int moveUnits = move.getUnitsCount();
@@ -177,7 +217,6 @@ public class GameField {
 
     private MoveBroadcast playerMoveAttack(Player player, Node fromNode, Node enemyNode, Move move) {
         int moveUnits = move.getUnitsCount();
-        fromNode.addToValue(-moveUnits);
 
         int delta = enemyNode.getValue() - moveUnits;
         Player enemy = room.getPlayer(enemyNode.getPid());
@@ -195,19 +234,36 @@ public class GameField {
         Node newNode;
         NodesAndLinks deleted;
         if (delta > 0) {
-            enemyNode.addToValue(-moveUnits);
+            enemyNode.addToValue(-moveUnits + delta);
             moveBroadcast.addValueUpdate(enemyNode);
-            moveBroadcast.addValueUpdate(fromNode);
+            setNodeToPosition(fromNode.getX(), fromNode.getY(), null);
+            if (fromNode == player.getMainNode()) {
+                moveBroadcast.setDeadpid(player.getId());
+            } else {
+                moveBroadcast.addRemovedNode(fromNode.getReduced());
+                player.getNodesMap().get(fromNode).forEach(node -> {
+                    moveBroadcast.addRemovedLink(fromNode, node);
+                });
+            }
             moveBroadcast.setResult(ACCEPT_LOSE);
         } else {
+            fromNode.addToValue(-moveUnits);
+            moveBroadcast.addValueUpdate(fromNode);
             deleted = killNode(enemyNode);
             newNode = addNewTower(fromNode, player,
-                    moveUnits - delta, move);
+                    moveUnits + delta, move);
             moveBroadcast.addNewNode(newNode);
             moveBroadcast.addNewLink(fromNode, newNode);
-            moveBroadcast.addValueUpdate(fromNode);
-            moveBroadcast.setRemovedNodes(deleted.getNodes());
-            moveBroadcast.setRemovedLinks(deleted.getLinks());
+
+            if (enemy.getMainNode() == enemyNode) {
+                moveBroadcast.setDeadpid(enemy.getId());
+            } else {
+                moveBroadcast.setRemovedNodes(deleted.getNodes());
+                moveBroadcast.setRemovedLinks(deleted.getLinks());
+            }
+            deleted.getNodes().forEach(rNode -> {
+                setNodeToPosition(rNode.getX(), rNode.getY(), null);
+            });
             moveBroadcast.setResult(ACCEPT_WIN);
         }
         player.addToUnits(-delta);
@@ -215,6 +271,7 @@ public class GameField {
 
         return moveBroadcast;
     }
+
 
     /**
      * @param node Node to kill
@@ -235,11 +292,8 @@ public class GameField {
             // If killed main player's node
             // Remove player from game
             if (player.getMainNode() == node) {
-                room.removePlayer(player);
                 Vector<RNode> deleteNodes = player.getReducedNodes();
-                deleteNodes.forEach(n -> {
-                    setNodeToPosition(n.getX(), n.getY(), null);
-                });
+                deleteNodes.forEach(n -> setNodeToPosition(n.getX(), n.getY(), null));
                 HashSet<NodesLink> deletedLinks = new HashSet<>();
                 nodesMap.forEach((n1, nodes) -> {
                     nodes.forEach(n2 -> deletedLinks.add(new NodesLink(n1.getReduced(), n2.getReduced())));
@@ -312,6 +366,37 @@ public class GameField {
         }
     }
 
+    public void removeNode(@NotNull Node node) {
+        setNodeToPosition(node.getX(), node.getY(), null);
+    }
+
+    @Nullable
+    public MoveBroadcast acceptMove(Player player, Move move) {
+        Node my = getByPosition(move.getXfrom(), move.getYfrom());
+        Node target = getByPosition(move.getXto(), move.getYto());
+        int moveRadius = (int) Math.sqrt((move.getXto() - move.getXfrom()) * (move.getXto() - move.getXfrom()) +
+                (move.getYto() - move.getYfrom()) * (move.getYto() - move.getYfrom()));
+        MoveBroadcast moveBroadcast = null;
+
+        if (my != target && checkTurn(my) && moveRadius <= room.getMoveRadius()) {
+            if (target == null) {
+                moveBroadcast = playerMoveFreeOrBonus(player, my, null, move);
+            } else if (checkTurn(target)) {
+                // Check if nodes are already linked
+                if (player.getNodesMap().get(my).contains(target))
+                    moveBroadcast = playerMoveUnitsMove(player, my, target, move);
+                else
+                    moveBroadcast = playerMoveLink(player, my, target, move);
+            } else {
+                if (target.isBonus())
+                    moveBroadcast = playerMoveFreeOrBonus(player, my, target, move);
+                else
+                    moveBroadcast = playerMoveAttack(player, my, target, move);
+            }
+        }
+        return moveBroadcast;
+    }
+
     private class NodesAndLinks {
         Vector<RNode> nodes;
         Vector<NodesLink> links;
@@ -328,36 +413,5 @@ public class GameField {
         public Vector<NodesLink> getLinks() {
             return links;
         }
-    }
-
-    public void removeNode(@NotNull Node node) {
-        setNodeToPosition(node.getX(), node.getY(), null);
-    }
-
-    @Nullable
-    public MoveBroadcast acceptMove(Player player, Move move) {
-        Node my = getByPosition(move.getXfrom(), move.getYfrom());
-        Node target = getByPosition(move.getXto(), move.getYto());
-        int moveRadius = (int) Math.sqrt((move.getXto() - move.getXfrom()) * (move.getXto() - move.getXfrom()) +
-                        (move.getYto() - move.getYfrom()) * (move.getYto() - move.getYfrom()));
-        MoveBroadcast moveBroadcast = null;
-
-        if (my != target && checkTurn(my) && moveRadius <= room.getMoveRadius()) {
-            if (target == null) {
-                moveBroadcast = playerMoveFree(player, my, move);
-            } else if (checkTurn(target)) {
-                // Check if nodes are already linked
-                if (player.getNodesMap().get(my).contains(target))
-                    moveBroadcast = playerMoveUnitsMove(player, my, target, move);
-                else
-                    moveBroadcast = playerMoveLink(player, my, target, move);
-            } else {
-                if (target.isBonus())
-                    moveBroadcast = playerMoveBonus(player, my, target, move);
-                else
-                    moveBroadcast = playerMoveAttack(player, my, target, move);
-            }
-        }
-        return moveBroadcast;
     }
 }
