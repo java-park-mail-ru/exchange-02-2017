@@ -21,6 +21,7 @@ public class HttpServerConfiguration extends WebMvcConfigurerAdapter {
                         "http://localhost:3000",
                         "https://cyclicgame.herokuapp.com",
                         "https://scaptaincap.asuscomm.com:5000",
+                        "http://scaptaincap.asuscomm.com:5000",
                         "http://172.16.91.197:3000",
                         "http://172.16.84.245:3000",
                         "http://172.20.10.2:3000",

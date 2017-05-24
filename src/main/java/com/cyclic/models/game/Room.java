@@ -16,7 +16,6 @@ import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static com.cyclic.configs.Enums.Datatype.DATATYPE_ROOMINFO;
-import static com.cyclic.configs.Enums.Datatype.DATATYPE_YOU_LOSE_LEAVE_ROOM;
 import static com.cyclic.configs.Enums.RoomStatus.STATUS_CREATING;
 import static com.cyclic.configs.Enums.RoomStatus.STATUS_PLAYING;
 
@@ -160,7 +159,6 @@ public class Room {
             for (Node node : player.getNodesMap().keySet()) {
                 field.removeNode(node);
             }
-            player.sendDatatype(DATATYPE_YOU_LOSE_LEAVE_ROOM);
             if (getPlayersCount() > 1) { // Game did not ended
                 if (pid == player.getId()) {
                     generateNextPid();
@@ -310,7 +308,7 @@ public class Room {
 
         @Override
         public void run() {
-            acceptMove(getPlayer(pid), null);
+            acceptMove(getPlayer(pid), new TimeoutMove());
         }
     }
 }

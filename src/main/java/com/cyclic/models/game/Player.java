@@ -83,7 +83,7 @@ public class Player {
     }
 
     public void sendDatatype(Enums.Datatype datatype) {
-        sendString("{datatype:" + datatype + "}");
+        sendString("{\"datatype\":\"" + datatype + "\"}");
     }
 
     public WebSocketSession getWebSocketSession() {
