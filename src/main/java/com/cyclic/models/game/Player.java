@@ -74,7 +74,7 @@ public class Player {
         this.room = room;
     }
 
-    public void sendString(String data) {
+    public synchronized void sendString(String data) {
         try {
             webSocketSession.sendMessage(new TextMessage(data));
         } catch (IOException e) {
@@ -141,20 +141,20 @@ public class Player {
         return nodesMap;
     }
 
-    public ArrayList<Node> getNodes() {
-        ArrayList<Node> ArrayList = new ArrayList<>();
+    public HashSet<Node> getNodes() {
+        HashSet<Node> hashSet = new HashSet<>();
         nodesMap.forEach((node, nodes) -> {
-            ArrayList.add(node);
+            hashSet.add(node);
         });
-        return ArrayList;
+        return hashSet;
     }
 
-    public ArrayList<RNode> getReducedNodes() {
-        ArrayList<RNode> ArrayList = new ArrayList<>();
+    public HashSet<RNode> getReducedNodes() {
+        HashSet<RNode> hashSet = new HashSet<>();
         nodesMap.forEach((node, nodes) -> {
-            ArrayList.add(node.getReduced());
+            hashSet.add(node.getReduced());
         });
-        return ArrayList;
+        return hashSet;
     }
 
     public void addToUnits(int count) {

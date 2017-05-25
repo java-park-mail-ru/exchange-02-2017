@@ -96,6 +96,10 @@ public class Room {
         return players.size() == capacity;
     }
 
+    public boolean isAlmostFull() {
+        return players.size() == capacity - 1;
+    }
+
     /**
      * Adds player to this room. Starts room if it is full
      *
@@ -146,6 +150,7 @@ public class Room {
      */
     public synchronized void removePlayer(Player player, boolean duringMove) {
         if (players.remove(player)) {
+            player.setRoom(null);
             if (roomManager != null)
                 roomManager.addPlayerWithNoRoom(player);
             freeColors.add(player.getColor());

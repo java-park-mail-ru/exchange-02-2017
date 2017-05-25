@@ -66,6 +66,12 @@ public class WebSocketController extends TextWebSocketHandler {
             session.close();
             return;
         }
+        if (sessionManager.nickIsInGame(user.getLogin())) {
+            LOG.errorConsole("User tryes to play from different PC");
+            session.sendMessage(new TextMessage(gson.toJson(new ConnectionError(DISCONNECT_REASON_NOT_LOGINED, "You are already playing from other PC!"))));
+            session.close();
+            return;
+        }
         Player player = new Player(session, user.getLogin(), user.getId());
         sessionManager.createPlayer(session, player);
         LOG.webSocketLog("New websocket connected. IP: " + session.getRemoteAddress() +

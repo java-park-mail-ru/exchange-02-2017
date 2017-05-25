@@ -8,6 +8,7 @@ import com.cyclic.models.game.net.toclient.RNode;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 
 import static com.cyclic.configs.Enums.Datatype.DATATYPE_PLAYERMOVE;
 
@@ -22,11 +23,38 @@ public class MoveBroadcast {
     private Long deadpid = null;
     private Enums.MoveResult result;
     private ArrayList<PlayerScore> scores;
-    private ArrayList<Node> valueUpdate;
-    private ArrayList<Node> newNodes;
-    private ArrayList<RNode> removedNodes;
-    private ArrayList<NodesLink> newLinks;
-    private ArrayList<NodesLink> removedLinks;
+    private HashSet<Node> valueUpdate;
+    private HashSet<Node> newNodes;
+    private HashSet<RNode> removedNodes;
+    private HashSet<NodesLink> newLinks;
+    private HashSet<NodesLink> removedLinks;
+
+    public void addOtherMoveBroadcast(MoveBroadcast moveBroadcast) {
+        if (moveBroadcast.getValueUpdate() != null) {
+            valueUpdate = new HashSet<>();
+            valueUpdate.addAll(moveBroadcast.getValueUpdate());
+        }
+
+        if (moveBroadcast.getNewNodes() != null) {
+            newNodes = new HashSet<>();
+            newNodes.addAll(moveBroadcast.getNewNodes());
+        }
+
+        if (moveBroadcast.getRemovedNodes() != null) {
+            removedNodes = new HashSet<>();
+            removedNodes.addAll(moveBroadcast.getRemovedNodes());
+        }
+
+        if (moveBroadcast.getNewLinks() != null) {
+            newLinks = new HashSet<>();
+            newLinks.addAll(moveBroadcast.getNewLinks());
+        }
+
+        if (moveBroadcast.getRemovedLinks() != null) {
+            removedLinks = new HashSet<>();
+            removedLinks.addAll(moveBroadcast.getRemovedLinks());
+        }
+    }
 
     public void addScores(PlayerScore score) {
         if (scores == null)
@@ -36,25 +64,25 @@ public class MoveBroadcast {
 
     public void addValueUpdate(Node node) {
         if (valueUpdate == null)
-            valueUpdate = new ArrayList<>();
+            valueUpdate = new HashSet<>();
         valueUpdate.add(node);
     }
 
     public void addNewNode(Node node) {
         if (newNodes == null)
-            newNodes = new ArrayList<>();
+            newNodes = new HashSet<>();
         newNodes.add(node);
     }
 
     public void addRemovedNode(RNode node) {
         if (removedNodes == null)
-            removedNodes = new ArrayList<>();
+            removedNodes = new HashSet<>();
         removedNodes.add(node);
     }
 
     public void addNewLink(NodesLink link) {
         if (newLinks == null)
-            newLinks = new ArrayList<>();
+            newLinks = new HashSet<>();
         newLinks.add(link);
     }
 
@@ -64,7 +92,7 @@ public class MoveBroadcast {
 
     public void addRemovedLink(NodesLink link) {
         if (removedLinks == null)
-            removedLinks = new ArrayList<>();
+            removedLinks = new HashSet<>();
         removedLinks.add(link);
     }
 
@@ -97,19 +125,39 @@ public class MoveBroadcast {
         this.nextpid = nextpid;
     }
 
+    public Enums.MoveResult getResult() {
+        return result;
+    }
+
     public void setResult(Enums.MoveResult result) {
         this.result = result;
     }
 
-    public void setRemovedNodes(ArrayList<RNode> removedNodes) {
+    public HashSet<Node> getValueUpdate() {
+        return valueUpdate;
+    }
+
+    public HashSet<Node> getNewNodes() {
+        return newNodes;
+    }
+
+    public HashSet<RNode> getRemovedNodes() {
+        return removedNodes;
+    }
+
+    public void setRemovedNodes(HashSet<RNode> removedNodes) {
         this.removedNodes = removedNodes;
     }
 
-    public void setRemovedLinks(ArrayList<NodesLink> removedLinks) {
-        this.removedLinks = removedLinks;
+    public HashSet<NodesLink> getNewLinks() {
+        return newLinks;
     }
 
-    public Enums.MoveResult getResult() {
-        return result;
+    public HashSet<NodesLink> getRemovedLinks() {
+        return removedLinks;
+    }
+
+    public void setRemovedLinks(HashSet<NodesLink> removedLinks) {
+        this.removedLinks = removedLinks;
     }
 }

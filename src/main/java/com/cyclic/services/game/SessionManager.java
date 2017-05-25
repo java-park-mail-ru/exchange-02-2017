@@ -3,6 +3,7 @@ package com.cyclic.services.game;
 import com.cyclic.models.game.Player;
 import org.springframework.web.socket.WebSocketSession;
 
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -17,6 +18,15 @@ public class SessionManager {
 
     public Player getPlayerForSession(WebSocketSession session) {
         return players.get(session);
+    }
+
+    public boolean nickIsInGame(String nick) {
+        for (Map.Entry<WebSocketSession, Player> webSocketSessionPlayerEntry : players.entrySet()) {
+            if (webSocketSessionPlayerEntry.getValue().getNickname().equals(nick)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void createPlayer(WebSocketSession session, Player player) {

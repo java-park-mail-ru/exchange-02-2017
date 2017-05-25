@@ -79,22 +79,23 @@ public class RoomManager {
         }
         Room room = freeRooms[roomCapacity - 2];
 
-        // !!!!!!
-        room.addPlayer(player);
-        // !!!!!!
 
-
-        allRooms.put(player, room);
         playersWithNoRoom.remove(player);
-        if (room.isFull()) {
+        allRooms.put(player, room);
+
+        if (room.isAlmostFull()) {
             freeRooms[roomCapacity - 2] = new Room(lastRoomId, this, room.getRoomConfig());
             broadcast.getRoomData(roomCapacity).setQueue(0);
         } else
-            broadcast.getRoomData(roomCapacity).setQueue(room.getPlayersCount());
+            broadcast.getRoomData(roomCapacity).setQueue(room.getPlayersCount() + 1);
         json = Application.gson.toJson(broadcast);
         playersWithNoRoom.forEach(p -> {
             p.sendString(json);
         });
+
+        // !!!!!!
+        room.addPlayer(player);
+        // !!!!!!
     }
 
     public void deletePlayerFromAnyRoom(Player player, boolean keepOnServer) {
@@ -107,7 +108,6 @@ public class RoomManager {
             return;
         }
         if (keepOnServer) {
-            player.setRoom(null);
             addPlayerWithNoRoom(player);
         }
         room.removePlayer(player, false);
@@ -123,5 +123,9 @@ public class RoomManager {
     public void addPlayerWithNoRoom(Player player) {
         playersWithNoRoom.add(player);
         player.sendString(json);
+    }
+
+    public void removePlayerWithNoRoom(Player player) {
+        playersWithNoRoom.remove(player);
     }
 }
