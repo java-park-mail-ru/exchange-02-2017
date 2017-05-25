@@ -10,10 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Stack;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static com.cyclic.configs.Enums.MoveResult.*;
@@ -132,6 +129,7 @@ public class GameField {
         HashMap<Node, HashSet<Node>> nodesMap = player.getNodesMap();
         nodesMap.get(l).add(r);
         nodesMap.get(r).add(l);
+
     }
 
     private void unlinkNodes(Node l, Node r, @Nullable Player player) {

@@ -43,6 +43,9 @@ public class GameProcessTest {
         roomConfig.setFieldWidth(20);
         roomConfig.setPlayersCount(2);
         roomConfig.setStartBonusCount(20);
+        roomConfig.setMoveRadius(2.5);
+        roomConfig.setMoveTimeSeconds(5.0);
+
     }
 
 
