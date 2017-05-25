@@ -65,6 +65,7 @@ public class Room {
         moveTimer = new Timer();
         moveTimerTask = new MoveTimerTask();
 
+
         freeColors = new ArrayList<>(capacity);
         for (int i = 0; i < capacity; i++) {
             freeColors.add(i);

@@ -6,8 +6,8 @@ import com.cyclic.models.game.net.toclient.NodesLink;
 import com.cyclic.models.game.net.toclient.RNode;
 import com.cyclic.models.game.net.toclient.broadcast.MoveBroadcast;
 import com.cyclic.models.game.net.toclient.broadcast.NewBonusBroadcast;
-import com.sun.istack.internal.NotNull;
-import com.sun.istack.internal.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -236,6 +236,9 @@ public class GameField {
 
     private MoveBroadcast playerMoveLink(Player player, Node fromNode, Node toNode, Move move) {
         int moveUnits = move.getUnitsCount();
+        if (!(moveUnits >= 1 && moveUnits < fromNode.getValue())) {
+            return null;
+        }
         fromNode.addToValue(-moveUnits);
         toNode.addToValue(moveUnits);
 
@@ -251,7 +254,9 @@ public class GameField {
 
     private MoveBroadcast playerMoveAttack(Player player, Node fromNode, Node enemyNode, Move move) {
         int moveUnits = move.getUnitsCount();
-
+        if (!(moveUnits >= 1 && moveUnits < fromNode.getValue())) {
+            return null;
+        }
         int delta = enemyNode.getValue() - moveUnits;
         Player enemy = room.getPlayer(enemyNode.getPid());
         /*
@@ -265,20 +270,36 @@ public class GameField {
         }
 
         MoveBroadcast moveBroadcast = new MoveBroadcast();
-        Node newNode;
         NodesAndLinks deleted;
         if (delta > 0) {
+            // TODO Fix it
             enemyNode.addToValue(-moveUnits + delta);
             moveBroadcast.addValueUpdate(enemyNode);
-            setNodeToPosition(fromNode.getX(), fromNode.getY(), null);
-            if (fromNode == player.getMainNode()) {
-                moveBroadcast.setDeadpid(player.getId());
-            } else {
-                moveBroadcast.addRemovedNode(fromNode.getReduced());
-                player.getNodesMap().get(fromNode).forEach(node -> {
-                    moveBroadcast.addRemovedLink(fromNode, node);
-                });
-            }
+            fromNode.addToValue(-moveUnits + delta);
+            moveBroadcast.addValueUpdate(fromNode);
+
+            player.addToUnits(-moveUnits + delta);
+            enemy.addToUnits(-moveUnits + delta);
+//            setNodeToPosition(fromNode.getX(), fromNode.getY(), null);
+//            if (fromNode == player.getMainNode()) {
+//                moveBroadcast.setDeadpid(player.getId());
+//            } else {
+//                moveBroadcast.addRemovedNode(fromNode.getReduced());
+//                player.getNodesMap().get(fromNode).forEach(node -> {
+//                    moveBroadcast.addRemovedLink(fromNode, node);
+//                });
+//            }
+//            deleted = killNode(fromNode);
+//            if (fromNode == player.getMainNode()) {
+//                moveBroadcast.setDeadpid(player.getId());
+//            } else {
+//                moveBroadcast.setRemovedNodes(deleted.getNodes());
+//                moveBroadcast.setRemovedLinks(deleted.getLinks());
+//            }
+//            if (getByPosition(fromNode.getX(), fromNode.getY()) != null) {
+//                moveBroadcast.addValueUpdate(fromNode);
+//            }
+
             moveBroadcast.setResult(ACCEPT_LOSE);
         } else {
             //fromNode.addToValue(-moveUnits);
@@ -291,16 +312,19 @@ public class GameField {
             //moveBroadcast.addNewNode(newNode);
             //moveBroadcast.addNewLink(fromNode, newNode);
 
+            int killedUnits = 0;
+
             if (enemy.getMainNode() == enemyNode) {
                 moveBroadcast.setDeadpid(enemy.getId());
             } else {
                 moveBroadcast.setRemovedNodes(deleted.getNodes());
                 moveBroadcast.setRemovedLinks(deleted.getLinks());
             }
+
+
+
             moveBroadcast.setResult(ACCEPT_WIN);
         }
-        player.addToUnits(-delta);
-        enemy.addToUnits(delta);
 
         return moveBroadcast;
     }
@@ -317,7 +341,7 @@ public class GameField {
         if (node.isBonus()) {
             HashSet<RNode> deleteNodes = new HashSet<>();
             deleteNodes.add(node.getReduced());
-            return new NodesAndLinks(deleteNodes, null);
+            return new NodesAndLinks(deleteNodes, null, node.getValue());
         } else {
             Player player = room.getPlayer(node.getPid());
             HashMap<Node, HashSet<Node>> nodesMap = player.getNodesMap();
@@ -328,14 +352,16 @@ public class GameField {
                 HashSet<RNode> deleteNodes = player.getReducedNodes();
                 deleteNodes.forEach(n -> setNodeToPosition(n.getX(), n.getY(), null));
                 HashSet<NodesLink> deletedLinks = new HashSet<>();
+                final int score = 0;
                 nodesMap.forEach((n1, nodes) -> {
+                    //score += n1.getValue();
                     nodes.forEach(n2 -> deletedLinks.add(new NodesLink(n1.getReduced(), n2.getReduced())));
                 });
                 HashSet<NodesLink> linksv = new HashSet<>();
                 linksv.addAll(deletedLinks);
                 if (linksv.isEmpty())
                     linksv = null;
-                return new NodesAndLinks(deleteNodes, linksv);
+                return new NodesAndLinks(deleteNodes, linksv, 0);
             }
 
             HashSet<RNode> deleteNodes = new HashSet<>();
@@ -396,7 +422,7 @@ public class GameField {
             linksv.addAll(deletedLinks);
             if (linksv.isEmpty())
                 linksv = null;
-            return new NodesAndLinks(deleteNodes, linksv);
+            return new NodesAndLinks(deleteNodes, linksv, 0);
         }
     }
 
@@ -432,10 +458,11 @@ public class GameField {
     }
 
     private class NodesAndLinks {
+        int killedScore;
         HashSet<RNode> nodes;
         HashSet<NodesLink> links;
 
-        public NodesAndLinks(HashSet<RNode> nodes, HashSet<NodesLink> links) {
+        public NodesAndLinks(HashSet<RNode> nodes, HashSet<NodesLink> links, int killedScore) {
             this.nodes = nodes;
             this.links = links;
         }
