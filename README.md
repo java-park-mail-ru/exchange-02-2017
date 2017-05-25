@@ -13,6 +13,9 @@
 * Алексей Набережный
 * Динияр Кадырбеков
 
+# Ссыллка на Игру
+  https://cyclicgame.herokuapp.com/
+
 # Ссыллка на API
   https://cyclic-server.herokuapp.com/api
 
