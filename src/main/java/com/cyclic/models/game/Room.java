@@ -25,7 +25,7 @@ import static com.cyclic.configs.Enums.RoomStatus.STATUS_PLAYING;
 
 public class Room {
     private final Enums.Datatype datatype = DATATYPE_ROOMINFO;
-    private final Vector<Player> players;
+    private final LinkedList<Player> players;
     private int capacity;
     private transient int startBonusCount;
     private transient int startTowerUnits;
@@ -47,6 +47,7 @@ public class Room {
     private transient RoomManager roomManager;
     private transient Timer moveTimer;
     private transient MoveTimerTask moveTimerTask;
+    //private transient Queue<Player> moveQueue;
 
 
     public Room(long roomID, RoomManager roomManager, RoomConfig roomConfig) {
@@ -71,7 +72,7 @@ public class Room {
             freeColors.add(i);
         }
         status = STATUS_CREATING;
-        players = new Vector<>(capacity);
+        players = new LinkedList<>();
         field = new GameField(this);
         gson = new GsonBuilder().create();
         pid = null;
@@ -234,14 +235,17 @@ public class Room {
                 }
                 moveBroadcast.setNextpid(pid);
 
-                for (Player p : players) {
-                    moveBroadcast.addScores(new PlayerScore(p.getId(), p.getUnits(), p.towersCount()));
-                }
-                moveBroadcast.sortScores();
-                broadcast(gson.toJson(moveBroadcast));
+
                 if (moveBroadcast.getDeadpid() != null) {
                     removePlayer(getPlayer(moveBroadcast.getDeadpid()), true);
                 }
+
+                for (Player p : players) {
+                    moveBroadcast.addScores(new PlayerScore(p.getId(), p.getUnits(), p.towersCount()));
+                }
+                
+                moveBroadcast.sortScores();
+                broadcast(gson.toJson(moveBroadcast));
                 if (getPlayersCount() != 0) {
                     moveTimer = new Timer();
                     moveTimerTask = new MoveTimerTask();
