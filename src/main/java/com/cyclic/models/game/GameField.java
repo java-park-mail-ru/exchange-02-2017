@@ -254,73 +254,48 @@ public class GameField {
         if (!(moveUnits >= 1 && moveUnits < fromNode.getValue())) {
             return null;
         }
-        int delta = enemyNode.getValue() - moveUnits;
+        int winner = enemyNode.getValue() - moveUnits;
         Player enemy = room.getPlayer(enemyNode.getPid());
+        // a = b - c
+        // b = a + c
         /*
-         *  delta < 0 ~ current Player win
-         *  delta = 0 ~ Random
-         *  delta > 0 ~ enemy win
+         *  winner < 0 ~ current Player win
+         *  winner = 0 ~ draw
+         *  winner > 0 ~ enemy win
          */
-
-        if (delta == 0) {
-            delta = ThreadLocalRandom.current().nextInt(0, 2) == 0 ? 1 : -1;
-        }
 
         MoveBroadcast moveBroadcast = new MoveBroadcast();
         NodesAndLinks deleted;
-        if (delta > 0) {
-            // TODO Fix it
-            enemyNode.addToValue(-moveUnits + delta);
-            moveBroadcast.addValueUpdate(enemyNode);
-            fromNode.addToValue(-moveUnits + delta);
-            moveBroadcast.addValueUpdate(fromNode);
 
-            player.addToUnits(-moveUnits + delta);
-            enemy.addToUnits(-moveUnits + delta);
-//            setNodeToPosition(fromNode.getX(), fromNode.getY(), null);
-//            if (fromNode == player.getMainNode()) {
-//                moveBroadcast.setDeadpid(player.getId());
-//            } else {
-//                moveBroadcast.addRemovedNode(fromNode.getReduced());
-//                player.getNodesMap().get(fromNode).forEach(node -> {
-//                    moveBroadcast.addRemovedLink(fromNode, node);
-//                });
-//            }
-//            deleted = killNode(fromNode);
-//            if (fromNode == player.getMainNode()) {
-//                moveBroadcast.setDeadpid(player.getId());
-//            } else {
-//                moveBroadcast.setRemovedNodes(deleted.getNodes());
-//                moveBroadcast.setRemovedLinks(deleted.getLinks());
-//            }
-//            if (getByPosition(fromNode.getX(), fromNode.getY()) != null) {
-//                moveBroadcast.addValueUpdate(fromNode);
-//            }
+        fromNode.addToValue(-moveUnits);
+        moveBroadcast.addValueUpdate(fromNode);
 
-            moveBroadcast.setResult(ACCEPT_LOSE);
-        } else {
-            //fromNode.addToValue(-moveUnits);
-            //moveBroadcast.addValueUpdate(fromNode);
+        if (winner <= 0) {
             deleted = killNode(enemyNode);
-            move.setUnitsCount(-delta);
-            moveBroadcast.addOtherMoveBroadcast(playerMoveFreeOrBonus(player, fromNode, null, move));
-            //newNode = addNewTower(fromNode, player,
-            //        moveUnits + delta, move);
-            //moveBroadcast.addNewNode(newNode);
-            //moveBroadcast.addNewLink(fromNode, newNode);
-
-            int killedUnits = 0;
-
+            int killedUnits = deleted.getKilledScore();
             if (enemy.getMainNode() == enemyNode) {
                 moveBroadcast.setDeadpid(enemy.getId());
             } else {
                 moveBroadcast.setRemovedNodes(deleted.getNodes());
                 moveBroadcast.setRemovedLinks(deleted.getLinks());
             }
-
-
-
+            player.addToUnits(-moveUnits);
+            enemy.addToUnits(-killedUnits);
+            fromNode.addToValue(-winner);
+            move.setUnitsCount(-winner);
+            if (winner < 0) {
+                moveBroadcast.addOtherMoveBroadcast(playerMoveFreeOrBonus(player, fromNode, null, move));
+            }
             moveBroadcast.setResult(ACCEPT_WIN);
+        }
+        if (winner > 0) {
+            enemyNode.addToValue(-moveUnits);
+            moveBroadcast.addValueUpdate(enemyNode);
+
+            player.addToUnits(-moveUnits);
+            enemy.addToUnits(-moveUnits);
+
+            moveBroadcast.setResult(ACCEPT_LOSE);
         }
 
         return moveBroadcast;
@@ -337,8 +312,9 @@ public class GameField {
         world[node.getY()][node.getX()] = null;
         if (node.isBonus()) {
             HashSet<RNode> deleteNodes = new HashSet<>();
+            HashSet<NodesLink> deleteLinks = new HashSet<>();
             deleteNodes.add(node.getReduced());
-            return new NodesAndLinks(deleteNodes, null, node.getValue());
+            return new NodesAndLinks(deleteNodes, deleteLinks, node.getValue());
         } else {
             Player player = room.getPlayer(node.getPid());
             HashMap<Node, HashSet<Node>> nodesMap = player.getNodesMap();
@@ -347,18 +323,17 @@ public class GameField {
             // Remove player from game
             if (player.getMainNode() == node) {
                 HashSet<RNode> deleteNodes = player.getReducedNodes();
-                deleteNodes.forEach(n -> setNodeToPosition(n.getX(), n.getY(), null));
+                int score = 0;
+                for (RNode n : deleteNodes) {
+                    score += getByPosition(n.getX(), n.getY()).getValue();
+                    setNodeToPosition(n.getX(), n.getY(), null);
+                }
                 HashSet<NodesLink> deletedLinks = new HashSet<>();
-                final int score = 0;
-                nodesMap.forEach((n1, nodes) -> {
-                    //score += n1.getValue();
+
+                nodesMap.forEach((Node n1, HashSet<Node> nodes) -> {
                     nodes.forEach(n2 -> deletedLinks.add(new NodesLink(n1.getReduced(), n2.getReduced())));
                 });
-                HashSet<NodesLink> linksv = new HashSet<>();
-                linksv.addAll(deletedLinks);
-                if (linksv.isEmpty())
-                    linksv = null;
-                return new NodesAndLinks(deleteNodes, linksv, 0);
+                return new NodesAndLinks(deleteNodes, deletedLinks, score);
             }
 
             HashSet<RNode> deleteNodes = new HashSet<>();
@@ -401,6 +376,12 @@ public class GameField {
             }
             // DFS
 
+            // Count killed units
+            int score = 0;
+            for (RNode n : deleteNodes) {
+                score += getByPosition(n.getX(), n.getY()).getValue();
+            }
+
             // Add to returning HashSets not visited nodes and their links
             visitedNodes.forEach((n, visited) -> {
                 if (!visited) {
@@ -414,12 +395,8 @@ public class GameField {
                 }
             });
 
-            // Return HashSet instead of set
-            HashSet<NodesLink> linksv = new HashSet<>();
-            linksv.addAll(deletedLinks);
-            if (linksv.isEmpty())
-                linksv = null;
-            return new NodesAndLinks(deleteNodes, linksv, 0);
+
+            return new NodesAndLinks(deleteNodes, deletedLinks, score);
         }
     }
 
@@ -455,9 +432,9 @@ public class GameField {
     }
 
     private class NodesAndLinks {
-        int killedScore;
-        HashSet<RNode> nodes;
-        HashSet<NodesLink> links;
+        private int killedScore;
+        private HashSet<RNode> nodes;
+        private HashSet<NodesLink> links;
 
         public NodesAndLinks(HashSet<RNode> nodes, HashSet<NodesLink> links, int killedScore) {
             this.nodes = nodes;
@@ -470,6 +447,10 @@ public class GameField {
 
         public HashSet<NodesLink> getLinks() {
             return links;
+        }
+
+        public int getKilledScore() {
+            return killedScore;
         }
     }
 }
