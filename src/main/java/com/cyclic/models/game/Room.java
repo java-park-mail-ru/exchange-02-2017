@@ -13,7 +13,7 @@ import com.google.gson.GsonBuilder;
 
 import java.awt.*;
 import java.util.*;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.Queue;
 
 import static com.cyclic.configs.Enums.Datatype.DATATYPE_ROOMINFO;
 import static com.cyclic.configs.Enums.RoomStatus.STATUS_CREATING;
@@ -230,24 +230,26 @@ public class Room {
                     player.disconnectBadApi("You cannot move like this");
                     return;
                 }
+
                 moveBroadcast.setPid(pid);
                 generateNextPid();
-                while (Objects.equals(pid, moveBroadcast.getDeadpid())) {
+                if (moveBroadcast.getDeadpid() != null && Objects.equals(moveBroadcast.getDeadpid(), pid)) {
                     generateNextPid();
                 }
                 moveBroadcast.setNextpid(pid);
 
+                for (Player p : players) {
+                    if (moveBroadcast.getDeadpid() == null || p.getId() != moveBroadcast.getDeadpid())
+                        moveBroadcast.addScores(new PlayerScore(p.getId(), p.getUnits(), p.towersCount()));
+                }
+
+                moveBroadcast.sortScores();
+                broadcast(gson.toJson(moveBroadcast));
 
                 if (moveBroadcast.getDeadpid() != null) {
                     removePlayer(getPlayer(moveBroadcast.getDeadpid()), true);
                 }
 
-                for (Player p : players) {
-                    moveBroadcast.addScores(new PlayerScore(p.getId(), p.getUnits(), p.towersCount()));
-                }
-
-                moveBroadcast.sortScores();
-                broadcast(gson.toJson(moveBroadcast));
                 if (getPlayersCount() != 0) {
                     moveTimer = new Timer();
                     moveTimerTask = new MoveTimerTask();
