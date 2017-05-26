@@ -20,6 +20,7 @@ public class HttpServerConfiguration extends WebMvcConfigurerAdapter {
                 .allowedOrigins(
                         "http://localhost:3000",
                         "https://cyclicgame.herokuapp.com",
+                        "http://cyclicgame.herokuapp.com",
                         "https://scaptaincap.asuscomm.com:5000",
                         "http://scaptaincap.asuscomm.com:5000",
                         "http://172.16.91.197:3000",
