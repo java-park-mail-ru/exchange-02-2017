@@ -97,12 +97,9 @@ public class MoveBroadcast {
     }
 
     public void sortScores() {
-        scores.sort(new Comparator<PlayerScore>() {
-            @Override
-            public int compare(PlayerScore o1, PlayerScore o2) {
-                return (int) (o2.getScore() - o1.getScore());
-            }
-        });
+        if (scores != null) {
+            scores.sort((o1, o2) -> (int) (o2.getScore() - o1.getScore()));
+        }
     }
 
     public Long getDeadpid() {

@@ -39,7 +39,6 @@ public class Room {
     private Enums.RoomStatus status;
     private long roomID;
 
-    private transient int performingPlayerIndex;
     private transient Gson gson;
     private transient GameField field;
     private transient ArrayList<Integer> freeColors;
@@ -47,7 +46,7 @@ public class Room {
     private transient RoomManager roomManager;
     private transient Timer moveTimer;
     private transient MoveTimerTask moveTimerTask;
-    //private transient Queue<Player> moveQueue;
+    private transient Queue<Player> moveQueue;
 
 
     public Room(long roomID, RoomManager roomManager, RoomConfig roomConfig) {
@@ -74,6 +73,7 @@ public class Room {
         status = STATUS_CREATING;
         players = new LinkedList<>();
         field = new GameField(this);
+        moveQueue = new LinkedList<>();
         gson = new GsonBuilder().create();
         pid = null;
     }
@@ -134,8 +134,9 @@ public class Room {
 
             // Start game if room is full
             if (status == STATUS_PLAYING) {
-                performingPlayerIndex = ThreadLocalRandom.current().nextInt(0, capacity);
-                pid = players.get(performingPlayerIndex).getId();
+                Collections.shuffle(players);
+                moveQueue.addAll(players);
+                generateNextPid();
                 broadcastRoomUpdate();
                 field.addAndBroadcastRandomBonuses(startBonusCount);
                 moveTimer.schedule(moveTimerTask, (long) moveTimeSeconds * 1000);
@@ -154,6 +155,7 @@ public class Room {
     public synchronized void removePlayer(Player player, boolean duringMove) {
         if (players.remove(player)) {
             player.setRoom(null);
+            moveQueue.remove(player);
             roomManager.getAllRooms().remove(player);
             if (roomManager != null)
                 roomManager.addPlayerWithNoRoom(player);
@@ -243,7 +245,7 @@ public class Room {
                 for (Player p : players) {
                     moveBroadcast.addScores(new PlayerScore(p.getId(), p.getUnits(), p.towersCount()));
                 }
-                
+
                 moveBroadcast.sortScores();
                 broadcast(gson.toJson(moveBroadcast));
                 if (getPlayersCount() != 0) {
@@ -259,9 +261,9 @@ public class Room {
     }
 
     private void generateNextPid() {
-        performingPlayerIndex += 1;
-        performingPlayerIndex %= getPlayersCount();
-        pid = players.get(performingPlayerIndex).getId();
+        Player p = moveQueue.poll();
+        pid = p.getId();
+        moveQueue.add(p);
     }
 
     public Long getPid() {

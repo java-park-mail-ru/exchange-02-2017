@@ -25,6 +25,7 @@ public class HttpServerConfiguration extends WebMvcConfigurerAdapter {
                         "http://scaptaincap.asuscomm.com:5000",
                         "http://172.16.91.197:3000",
                         "http://192.168.1.102:3000",
+                        "http://172.16.84.247:3000",
                         "http://172.16.84.245:3000",
                         "http://172.20.10.2:3000",
                         "http://172.20.10.14:3000",
