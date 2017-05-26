@@ -149,6 +149,7 @@ public class GameField {
     private MoveBroadcast playerMoveFreeOrBonus(Player player, Node fromNode, Node bonus, Move move) {
         int moveUnits = move.getUnitsCount();
         if (!(moveUnits >= 1 && moveUnits < fromNode.getValue())) {
+            LOG.errorConsole("moveFreeOrBonus fail!");
             return null;
         }
         fromNode.addToValue(-moveUnits);
@@ -234,6 +235,7 @@ public class GameField {
     private MoveBroadcast playerMoveLink(Player player, Node fromNode, Node toNode, Move move) {
         int moveUnits = move.getUnitsCount();
         if (!(moveUnits >= 1 && moveUnits < fromNode.getValue())) {
+            LOG.errorConsole("moveLink fail!");
             return null;
         }
         fromNode.addToValue(-moveUnits);
@@ -252,6 +254,7 @@ public class GameField {
     private MoveBroadcast playerMoveAttack(Player player, Node fromNode, Node enemyNode, Move move) {
         int moveUnits = move.getUnitsCount();
         if (!(moveUnits >= 1 && moveUnits < fromNode.getValue())) {
+            LOG.errorConsole("moveAttack fail!");
             return null;
         }
         int winner = enemyNode.getValue() - moveUnits;
@@ -346,12 +349,11 @@ public class GameField {
             });
 
             // Remove THIS node from map
-            if (nodesMap.containsKey(node)) {
-                for (Node n : nodesMap.get(node)) {
-                    nodesMap.get(n).remove(node);
-                }
-                nodesMap.remove(node);
+            for (Node n : nodesMap.get(node)) {
+                nodesMap.get(n).remove(node);
             }
+            nodesMap.remove(node);
+
 
             // Create map of visited nodes in DFS
             HashMap<Node, Boolean> visitedNodes = new HashMap<>();
@@ -380,6 +382,9 @@ public class GameField {
             for (RNode n : deleteNodes) {
                 score += getByPosition(n.getX(), n.getY()).getValue();
             }
+
+            // Set this node null to the world map
+            setNodeToPosition(node.getX(), node.getY(), null);
 
             // Add to returning HashSets not visited nodes and their links
             visitedNodes.forEach((n, visited) -> {
