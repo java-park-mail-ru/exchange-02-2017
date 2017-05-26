@@ -120,6 +120,7 @@ public class Room {
             player.setColor(freeColors.get(0));
             freeColors.remove(0);
             Point point = field.findRandomNullPoint();
+            player.resetNodesMap();
             player.setBeginX(point.x);
             player.setBeginY(point.y);
             player.setUnits(startTowerUnits);
@@ -152,6 +153,7 @@ public class Room {
     public synchronized void removePlayer(Player player, boolean duringMove) {
         if (players.remove(player)) {
             player.setRoom(null);
+            roomManager.getAllRooms().remove(player);
             if (roomManager != null)
                 roomManager.addPlayerWithNoRoom(player);
             freeColors.add(player.getColor());

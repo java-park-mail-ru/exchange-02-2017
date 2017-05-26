@@ -164,4 +164,8 @@ public class Player {
     public int towersCount() {
         return nodesMap.size();
     }
+
+    public void resetNodesMap() {
+        nodesMap = new HashMap<>();
+    }
 }

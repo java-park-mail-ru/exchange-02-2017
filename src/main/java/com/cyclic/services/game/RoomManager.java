@@ -125,6 +125,10 @@ public class RoomManager {
         player.sendString(json);
     }
 
+    public ConcurrentHashMap<Player, Room> getAllRooms() {
+        return allRooms;
+    }
+
     public void removePlayerWithNoRoom(Player player) {
         playersWithNoRoom.remove(player);
     }

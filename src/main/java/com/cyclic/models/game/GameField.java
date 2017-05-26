@@ -129,7 +129,6 @@ public class GameField {
         HashMap<Node, HashSet<Node>> nodesMap = player.getNodesMap();
         nodesMap.get(l).add(r);
         nodesMap.get(r).add(l);
-
     }
 
     private void unlinkNodes(Node l, Node r, @Nullable Player player) {
@@ -303,7 +302,7 @@ public class GameField {
             //fromNode.addToValue(-moveUnits);
             //moveBroadcast.addValueUpdate(fromNode);
             deleted = killNode(enemyNode);
-            move.setUnitsCount(moveUnits + delta);
+            move.setUnitsCount(-delta);
             moveBroadcast.addOtherMoveBroadcast(playerMoveFreeOrBonus(player, fromNode, null, move));
             //newNode = addNewTower(fromNode, player,
             //        moveUnits + delta, move);
