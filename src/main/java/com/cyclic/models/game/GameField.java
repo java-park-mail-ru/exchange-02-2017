@@ -309,8 +309,8 @@ public class GameField {
     public NodesAndLinks killNode(Node node) {
         if (node == null)
             return null;
-        world[node.getY()][node.getX()] = null;
         if (node.isBonus()) {
+            world[node.getY()][node.getX()] = null;
             HashSet<RNode> deleteNodes = new HashSet<>();
             HashSet<NodesLink> deleteLinks = new HashSet<>();
             deleteNodes.add(node.getReduced());
@@ -351,7 +351,6 @@ public class GameField {
                     nodesMap.get(n).remove(node);
                 }
                 nodesMap.remove(node);
-                setNodeToPosition(node.getX(), node.getY(), null);
             }
 
             // Create map of visited nodes in DFS
