@@ -38,25 +38,30 @@ public class UserController {
         String email = body.getEmail();
         String login = body.getLogin();
         String password = body.getPassword();
+        StringBuilder errorBuilder = new StringBuilder();
 
         if (login == null || !Validator.login(login.trim())) {
-            return ResponseEntity.badRequest().body(new Status("invalid login"));
-        }
-        login = login.trim();
-
-        if (password == null || password.length() == 0) {
-            return ResponseEntity.badRequest().body(new Status("invalid password"));
+            errorBuilder.append("Login must not be null. ");
         }
         if (email == null || !Validator.email(email)) {
-            return ResponseEntity.badRequest().body(new Status("invalid email"));
+            errorBuilder.append("Email must not be null. ");
         }
-
+        if (password == null || password.length() == 0) {
+            errorBuilder.append("Password must not be null. ");
+        }
         if (accountService.getUserByLogin(login) != null) {
-            return ResponseEntity.badRequest().body(new Status("login already used"));
+            errorBuilder.append("This username is already registered. ");
         }
         if (accountService.getUserByEmail(email) != null) {
-            return ResponseEntity.badRequest().body(new Status("email already used"));
+            errorBuilder.append("This email is already registered. ");
         }
+
+        String error = errorBuilder.toString();
+        if (error.length() != 0) {
+            return ResponseEntity.badRequest().body(new Status(error));
+        }
+
+        login = login.trim();
 
         body.setPassword(passwordEncoder.encode(password));
         accountService.addUser(body);

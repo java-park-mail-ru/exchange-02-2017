@@ -2,6 +2,7 @@ package com.cyclic.controllers;
 
 import com.cyclic.models.base.Status;
 import com.cyclic.models.base.User;
+import com.cyclic.models.base.UserView;
 import com.cyclic.services.AccountService;
 import com.cyclic.services.AccountServiceDB;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,26 +38,40 @@ public class AuthController {
 
     @RequestMapping(method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     public ResponseEntity tryAuth(@RequestBody User body, HttpSession httpSession) {
+        if (httpSession.getAttribute("userId") != null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new Status("You are already logged in"));
+        }
         String login = body.getLogin();
         String password = body.getPassword();
 
         if (login == null) {
-            return ResponseEntity.badRequest().body(new Status("incorrect login"));
+            return ResponseEntity.badRequest().body(new Status("You need to specify username"));
         }
         login = login.trim();
 
         User user = accountService.getUserByLogin(login);
-        if (user == null) {
-            return ResponseEntity.badRequest().body(new Status("incorrect login"));
-        }
-        if (!passwordEncoder.matches(password, user.getPassword())) {
-            return ResponseEntity.badRequest().body(new Status("incorrect password"));
+        if (user == null || !passwordEncoder.matches(password, user.getPassword())) {
+            return ResponseEntity.badRequest().body(new Status("Incorrect password. Try again"));
         }
 
         httpSession.setAttribute("userId", user.getId());
+        httpSession.setAttribute("nickname", user.getLogin());
         //authorizationService.add(httpSession, user.getId());
 
-        return ResponseEntity.ok(new Status("success login"));
+        return ResponseEntity.ok(user.toView());
+    }
+
+    @RequestMapping(path = "/temporary", method = RequestMethod.POST, produces = "application/json")
+    public ResponseEntity tempUser(HttpSession httpSession) {
+        if (httpSession.getAttribute("userId") != null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new Status("You are already logged in"));
+        }
+        String name = "Guest" + httpSession.hashCode();
+        httpSession.setAttribute("userId", (long) -1);
+        httpSession.setAttribute("nickname", name);
+        //authorizationService.add(httpSession, user.getId());
+
+        return ResponseEntity.ok(new UserView("", "", "", name, (long) 0));
     }
 
     @RequestMapping(method = RequestMethod.DELETE, produces = "application/json")
@@ -65,6 +80,7 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new Status("user not authorized"));
         }
         httpSession.removeAttribute("userId");
+        httpSession.removeAttribute("nickname");
         //authorizationService.remove(httpSession);
 
         return ResponseEntity.ok(new Status("success exited"));

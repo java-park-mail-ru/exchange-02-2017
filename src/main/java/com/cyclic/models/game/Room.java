@@ -120,7 +120,7 @@ public class Room {
 
             player.setColor(freeColors.get(0));
             freeColors.remove(0);
-            Point point = field.findRandomNullPoint();
+            Point point = field.findRandomNullSpawnPoint();
             player.resetNodesMap();
             player.setBeginX(point.x);
             player.setBeginY(point.y);

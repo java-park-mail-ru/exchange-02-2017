@@ -58,21 +58,22 @@ public class WebSocketController extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-        final Long id = (Long) session.getAttributes().get("userId");
-        User user = accountService.getUserById(id);
-        if (user == null) {
+        Long id = (Long) session.getAttributes().get("userId");
+        String nickname = (String) session.getAttributes().get("nickname");
+
+        if (id == null || nickname == null) {
             LOG.errorConsole("Unlogined user try to play");
             session.sendMessage(new TextMessage(gson.toJson(new ConnectionError(DISCONNECT_REASON_NOT_LOGINED, "You are not authorized!"))));
             session.close();
             return;
         }
-        if (sessionManager.nickIsInGame(user.getLogin())) {
+        if (sessionManager.nickIsInGame(nickname)) {
             LOG.errorConsole("User tryes to play from different PC");
             session.sendMessage(new TextMessage(gson.toJson(new ConnectionError(DISCONNECT_REASON_NOT_LOGINED, "You are already playing from other PC!"))));
             session.close();
             return;
         }
-        Player player = new Player(session, user.getLogin(), user.getId());
+        Player player = new Player(session, nickname, session.hashCode());
         sessionManager.createPlayer(session, player);
         LOG.webSocketLog("New websocket connected. IP: " + session.getRemoteAddress() +
                 ", Nick: " + player.getNickname());

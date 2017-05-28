@@ -22,6 +22,7 @@ public class GameField {
     private transient int height, width;
     private transient Node[][] world;
     private transient ArrayList<Point> freePoints;
+    private transient ArrayList<Point> freeSpawnPoints;
     private transient Room room;
 
     public GameField(Room room) {
@@ -30,9 +31,11 @@ public class GameField {
         this.width = room.getFieldWidth();
         world = new Node[height][width];
         freePoints = new ArrayList<>();
+        freeSpawnPoints = new ArrayList<>();
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++) {
                 freePoints.add(new Point(i, j));
+                freeSpawnPoints.add(new Point(i, j));
             }
         }
     }
@@ -76,6 +79,21 @@ public class GameField {
             return null;
         int rand = ThreadLocalRandom.current().nextInt(0, freePoints.size());
         return freePoints.get(rand);
+    }
+
+    @Nullable
+    public Point findRandomNullSpawnPoint() {
+        if (freeSpawnPoints.size() == 0)
+            return null;
+        int rand = ThreadLocalRandom.current().nextInt(0, freeSpawnPoints.size());
+        Point p = freeSpawnPoints.get(rand);
+        for (int x = (int) (p.x - room.getMoveRadius() * 2); x < p.x + room.getMoveRadius() * 2; x++) {
+            for (int y = (int) (p.y - room.getMoveRadius() * 2); y < p.y + room.getMoveRadius() * 2; y++) {
+                freeSpawnPoints.remove(new Point(x,y));
+            }
+        }
+        freeSpawnPoints.remove(p);
+        return p;
     }
 
     private boolean checkTurn(Node node) {
@@ -287,6 +305,7 @@ public class GameField {
             fromNode.addToValue(-winner);
             move.setUnitsCount(-winner);
             if (winner < 0) {
+                player.addToUnits(winner);
                 moveBroadcast.addOtherMoveBroadcast(playerMoveFreeOrBonus(player, fromNode, null, move));
             }
             moveBroadcast.setResult(ACCEPT_WIN);
@@ -378,16 +397,14 @@ public class GameField {
             // DFS
 
             // Count killed units
-            int score = 0;
-            for (RNode n : deleteNodes) {
-                score += getByPosition(n.getX(), n.getY()).getValue();
-            }
+
+            Integer[] score = {node.getValue()};
 
             // Set this node null to the world map
             setNodeToPosition(node.getX(), node.getY(), null);
 
             // Add to returning HashSets not visited nodes and their links
-            visitedNodes.forEach((n, visited) -> {
+            visitedNodes.forEach((Node n, Boolean visited) -> {
                 if (!visited) {
                     for (Node v : nodesMap.get(n)) {
                         nodesMap.get(v).remove(n);
@@ -395,12 +412,13 @@ public class GameField {
                     }
                     nodesMap.remove(n);
                     deleteNodes.add(n.getReduced());
+                    score[0] += getByPosition(n.getX(), n.getY()).getValue();
                     setNodeToPosition(n.getX(), n.getY(), null);
                 }
             });
 
 
-            return new NodesAndLinks(deleteNodes, deletedLinks, score);
+            return new NodesAndLinks(deleteNodes, deletedLinks, score[0]);
         }
     }
 
@@ -441,6 +459,7 @@ public class GameField {
         private HashSet<NodesLink> links;
 
         public NodesAndLinks(HashSet<RNode> nodes, HashSet<NodesLink> links, int killedScore) {
+            this.killedScore = killedScore;
             this.nodes = nodes;
             this.links = links;
         }
