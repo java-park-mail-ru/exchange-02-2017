@@ -35,7 +35,8 @@ public class Enums {
     // ROOM statuses
     public enum RoomStatus {
         STATUS_CREATING,
-        STATUS_PLAYING
+        STATUS_PLAYING,
+        STATUS_FINISHED
     }
 
     // MOVE results

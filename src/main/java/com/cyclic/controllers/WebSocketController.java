@@ -1,8 +1,8 @@
 package com.cyclic.controllers;
 
 import com.cyclic.LOG;
-import com.cyclic.models.base.User;
 import com.cyclic.models.game.Player;
+import com.cyclic.models.game.Room;
 import com.cyclic.models.game.net.fromclient.WebSocketAnswer;
 import com.cyclic.models.game.net.toclient.ConnectionError;
 import com.cyclic.models.game.net.toclient.HelloMessage;
@@ -41,16 +41,22 @@ public class WebSocketController extends TextWebSocketHandler {
 
     @Override
     public void handleTransportError(WebSocketSession session, Throwable throwable) throws Exception {
-        //System.out.println("errorConsole occured at sender " + session);
-        //TreeSet
+
     }
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
         Player player = sessionManager.getPlayerForSession(session);
         if (player != null) {
-            roomManager.deletePlayerFromAnyRoom(player, false);
+            Room room = player.getRoom();
+            roomManager.removePlayerWithNoRoom(player);
+
+            if (room != null) {
+                room.removePlayer(player, false);
+                room.removeSpectator(player);
+            }
             sessionManager.deletePlayer(player);
+            player.setRoom(null);
             LOG.webSocketLog("Websocket disconnected.  IP: " + session.getRemoteAddress() +
                     ", Nick: " + player.getNickname());
         }
@@ -58,10 +64,9 @@ public class WebSocketController extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-        Long id = (Long) session.getAttributes().get("userId");
         String nickname = (String) session.getAttributes().get("nickname");
 
-        if (id == null || nickname == null) {
+        if (nickname == null) {
             LOG.errorConsole("Unlogined user try to play");
             session.sendMessage(new TextMessage(gson.toJson(new ConnectionError(DISCONNECT_REASON_NOT_LOGINED, "You are not authorized!"))));
             session.close();
@@ -73,69 +78,84 @@ public class WebSocketController extends TextWebSocketHandler {
             session.close();
             return;
         }
-        Player player = new Player(session, nickname, session.hashCode());
+        Player player = new Player(session, nickname);
         sessionManager.createPlayer(session, player);
         LOG.webSocketLog("New websocket connected. IP: " + session.getRemoteAddress() +
                 ", Nick: " + player.getNickname());
-        session.sendMessage(new TextMessage(gson.toJson(new HelloMessage(player.getNickname(), player.getId()))));
+        session.sendMessage(new TextMessage(gson.toJson(new HelloMessage(player.getNickname()))));
         roomManager.addPlayerWithNoRoom(player);
     }
 
 
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage jsonTextMessage) throws Exception {
-        String message = jsonTextMessage.getPayload();
-        WebSocketAnswer webSocketAnswer = null;
         try {
-            webSocketAnswer = new Gson().fromJson(message, WebSocketAnswer.class);
-        } catch (JsonSyntaxException e) {
-            LOG.error(e);
-        }
-        if (webSocketAnswer != null) {
-            Player player = sessionManager.getPlayerForSession(session);
-            if (player == null) {
-                LOG.errorConsole("Cannot find player for session!!");
-                return;
-            }
-            if (webSocketAnswer.getAction() == null) {
-                player.disconnectBadApi("Bad actionCode");
-                return;
-            }
-            LOG.webSocketLog("Message from " + player.getNickname() + " (Ip " + session.getRemoteAddress() + "). Code: " + webSocketAnswer.getAction());
+            String message = jsonTextMessage.getPayload();
+            WebSocketAnswer webSocketAnswer = null;
             try {
-                switch (webSocketAnswer.getAction()) {
-                    case ACTION_GIVE_ME_ROOM:
-                        roomManager.findRoomForThisGuy(player, webSocketAnswer.getRoomCapacity());
-                        break;
-                    case ACTION_EXIT_ROOM:
-                        roomManager.deletePlayerFromAnyRoom(player, true);
-                        break;
-                    case ACTION_PING:
-                        player.sendDatatype(DATATYPE_PONG);
-                        break;
-                    case ACTION_GAME_MOVE:
-                        if (player.getRoom() == null) {
-                            player.disconnectBadApi("You move while not in the room");
-                            break;
-                        }
-                        if (webSocketAnswer.getMove() == null) {
-                            player.disconnectBadApi("You need to specify move!");
-                            break;
-                        }
-                        if (!webSocketAnswer.getMove().isValid()) {
-                            player.disconnectBadApi("Your move is not valid!");
-                            break;
-                        }
-                        player.getRoom().acceptMove(player, webSocketAnswer.getMove());
-                        break;
-                    default:
-                        player.disconnectBadApi("Unknown actionCode");
-                }
-            } catch (Exception e) {
-                LOG.errorConsole(e);
+                webSocketAnswer = new Gson().fromJson(message, WebSocketAnswer.class);
+            } catch (JsonSyntaxException e) {
+                LOG.error(e);
             }
-        } else {
-            session.close();
+            if (webSocketAnswer != null) {
+                Player player = sessionManager.getPlayerForSession(session);
+                if (player == null) {
+                    LOG.errorConsole("Cannot find player for session!!");
+                    return;
+                }
+                if (webSocketAnswer.getAction() == null) {
+                    player.disconnectBadApi("Bad actionCode");
+                    return;
+                }
+                LOG.webSocketLog("Message from " + player.getNickname() + " (Ip " + session.getRemoteAddress() + "). Code: " + webSocketAnswer.getAction());
+                try {
+                    switch (webSocketAnswer.getAction()) {
+                        case ACTION_GIVE_ME_ROOM:
+                            if (player.getRoom() != null) {
+                                player.disconnectBadApi("You cannot find new room while in another one");
+                                break;
+                            }
+                            roomManager.findRoomForThisGuy(player, webSocketAnswer.getRoomCapacity());
+                            break;
+                        case ACTION_EXIT_ROOM:
+                            Room room = player.getRoom();
+                            if (room == null) {
+                                player.disconnectBadApi("Cannot leave room if you do not have one!");
+                                break;
+                            }
+                            room.removeSpectator(player);
+                            room.removePlayer(player, false);
+                            roomManager.addPlayerWithNoRoom(player);
+                            break;
+                        case ACTION_PING:
+                            player.sendDatatype(DATATYPE_PONG);
+                            break;
+                        case ACTION_GAME_MOVE:
+                            if (player.getRoom() == null) {
+                                player.disconnectBadApi("You move while not in the room");
+                                break;
+                            }
+                            if (webSocketAnswer.getMove() == null) {
+                                player.disconnectBadApi("You need to specify move!");
+                                break;
+                            }
+                            if (!webSocketAnswer.getMove().isValid()) {
+                                player.disconnectBadApi("Your move is not valid!");
+                                break;
+                            }
+                            player.getRoom().acceptMove(player, webSocketAnswer.getMove());
+                            break;
+                        default:
+                            player.disconnectBadApi("Unknown actionCode");
+                    }
+                } catch (Exception e) {
+                    LOG.errorConsole(e);
+                }
+            } else {
+                session.close();
+            }
+        } catch (Exception e) {
+            LOG.errorConsole(e);
         }
     }
 

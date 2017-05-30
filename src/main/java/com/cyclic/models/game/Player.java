@@ -10,7 +10,6 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -18,11 +17,13 @@ import static com.cyclic.configs.Enums.DisconnectReason.DISCONNECT_REASON_API_HA
 
 /**
  * Created by serych on 01.04.17.
+ * Class, that contains information about player.
+ * Do not contain any useful methods except of stopping websocket session
  */
 public class Player {
 
     private String nickname;
-    private long id;
+    private Long id;
     private int color;
     private long units;
     private int beginX = 0;
@@ -34,11 +35,10 @@ public class Player {
     private transient HashMap<Node, HashSet<Node>> nodesMap;
 
 
-    public Player(WebSocketSession webSocketSession, String nickname, long id) {
+    public Player(WebSocketSession webSocketSession, String nickname) {
         this.webSocketSession = webSocketSession;
         this.gson = new GsonBuilder().create();
         this.nickname = nickname;
-        this.id = id;
         this.nodesMap = new HashMap<>();
     }
 
@@ -56,6 +56,10 @@ public class Player {
 
     public long getId() {
         return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public long getUnits() {
@@ -168,6 +172,5 @@ public class Player {
     public void resetNodesMap() {
         nodesMap = new HashMap<>();
     }
-
 
 }

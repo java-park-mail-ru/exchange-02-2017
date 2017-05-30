@@ -16,8 +16,7 @@ import java.util.*;
 import java.util.Queue;
 
 import static com.cyclic.configs.Enums.Datatype.DATATYPE_ROOMINFO;
-import static com.cyclic.configs.Enums.RoomStatus.STATUS_CREATING;
-import static com.cyclic.configs.Enums.RoomStatus.STATUS_PLAYING;
+import static com.cyclic.configs.Enums.RoomStatus.*;
 
 /**
  * Created by serych on 31.03.17.
@@ -26,6 +25,7 @@ import static com.cyclic.configs.Enums.RoomStatus.STATUS_PLAYING;
 public class Room {
     private final Enums.Datatype datatype = DATATYPE_ROOMINFO;
     private final LinkedList<Player> players;
+    private final LinkedList<Player> spectators;
     private int capacity;
     private transient int startBonusCount;
     private transient int startTowerUnits;
@@ -72,6 +72,7 @@ public class Room {
         }
         status = STATUS_CREATING;
         players = new LinkedList<>();
+        spectators = new LinkedList<>();
         field = new GameField(this);
         moveQueue = new LinkedList<>();
         gson = new GsonBuilder().create();
@@ -108,7 +109,7 @@ public class Room {
      * @param player Player to add
      * @return True if the player was added. False if error has occurred
      */
-    public boolean addPlayer(Player player) {
+    public synchronized boolean addPlayer(Player player) {
         if (status != STATUS_CREATING)
             return false;
         player.setRoom(this);
@@ -119,6 +120,7 @@ public class Room {
         Thread thread = new Thread(() -> {
 
             player.setColor(freeColors.get(0));
+            player.setId((long) freeColors.get(0));
             freeColors.remove(0);
             Point point = field.findRandomNullSpawnPoint();
             player.resetNodesMap();
@@ -155,15 +157,15 @@ public class Room {
     public synchronized void removePlayer(Player player, boolean duringMove) {
         if (players.remove(player)) {
             player.setRoom(null);
+            player.setId(null);
             moveQueue.remove(player);
-            roomManager.getAllRooms().remove(player);
-            if (roomManager != null)
-                roomManager.addPlayerWithNoRoom(player);
             freeColors.add(player.getColor());
             if (status == STATUS_CREATING) {
+                field.addPossibleSpawnPoints(player);
                 broadcastRoomUpdate();
                 return;
             }
+            // Playing game
             if (players.size() == 0) {
                 return;
             }
@@ -178,6 +180,7 @@ public class Room {
                     broadcast(gson.toJson(new PlayerDisconnectBroadcast(player, pid)));
                 }
             } else { // Player WIN!!
+                status = STATUS_FINISHED;
                 if (moveTimer != null) {
                     moveTimer.cancel();
                 }
@@ -185,6 +188,7 @@ public class Room {
                 lastPlayer.sendString(gson.toJson(new WinBroadcast()));
                 RoomManager.accountService.updateUserHighscore(lastPlayer.getId(), lastPlayer.getUnits());
                 removePlayer(lastPlayer, false);
+                addSpectator(lastPlayer);
             }
         }
     }
@@ -194,6 +198,10 @@ public class Room {
      */
     private void broadcastRoomUpdate() {
         for (Player player : players) {
+            player.sendString(gson.toJson(this));
+        }
+
+        for (Player player : spectators) {
             player.sendString(gson.toJson(this));
         }
     }
@@ -207,6 +215,10 @@ public class Room {
         players.forEach(player -> {
             player.sendString(data);
         });
+        spectators.forEach(player -> {
+                    player.sendString(data);
+                }
+        );
     }
 
     /**
@@ -247,7 +259,9 @@ public class Room {
                 broadcast(gson.toJson(moveBroadcast));
 
                 if (moveBroadcast.getDeadpid() != null) {
-                    removePlayer(getPlayer(moveBroadcast.getDeadpid()), true);
+                    Player loser = getPlayer(moveBroadcast.getDeadpid());
+                    removePlayer(loser, true);
+                    addSpectator(player);
                 }
 
                 if (getPlayersCount() != 0) {
@@ -260,6 +274,16 @@ public class Room {
         } else {
             player.disconnectBadApi("Cannot accept move. Room is not playing");
         }
+    }
+
+    public void removeSpectator(Player player) {
+        spectators.remove(player);
+        player.setRoom(null);
+    }
+
+    public void addSpectator(Player player) {
+        spectators.add(player);
+        player.setRoom(this);
     }
 
     private void generateNextPid() {

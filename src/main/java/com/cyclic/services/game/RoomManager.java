@@ -23,7 +23,6 @@ public class RoomManager {
     public static ResourceManager resourceManager;
     public static AccountService accountService;
     private static RoomConfig mainRoomConfig;
-    private ConcurrentHashMap<Player, Room> allRooms;
     private Vector<Player> playersWithNoRoom;
     private Room[] freeRooms;
     private long lastRoomId = 0;
@@ -35,7 +34,6 @@ public class RoomManager {
         RoomManager.resourceManager = resourceManager;
         RoomManager.accountService = accountService;
         mainRoomConfig = resourceManager.getRoomConfig();
-        allRooms = new ConcurrentHashMap<>();
         playersWithNoRoom = new Vector<>();
         freeRooms = new Room[mainRoomConfig.getPlayersCount() - 1];
         broadcast = new RoomManagerUpdateBroadcast(mainRoomConfig.getPlayersCount() - 1);
@@ -48,10 +46,6 @@ public class RoomManager {
         json = Application.gson.toJson(broadcast);
     }
 
-    public Room getPlayersRoom(Player player) {
-        return allRooms.get(player);
-    }
-
     /**
      * Very important method! Finds a room for a player and starts room if it is full
      *
@@ -59,10 +53,6 @@ public class RoomManager {
      * @param roomCapacity Desired capacity of the room. Unnecessary param.
      */
     public synchronized void findRoomForThisGuy(Player player, Integer roomCapacity) {
-        if (getPlayersRoom(player) != null) {
-            player.disconnectBadApi("You already have a room");
-            return;
-        }
         if (roomCapacity == null) {
             double koef = 0;
             roomCapacity = 2;
@@ -79,54 +69,30 @@ public class RoomManager {
         }
         Room room = freeRooms[roomCapacity - 2];
 
-
         playersWithNoRoom.remove(player);
-        allRooms.put(player, room);
 
         if (room.isAlmostFull()) {
             freeRooms[roomCapacity - 2] = new Room(lastRoomId, this, room.getRoomConfig());
             broadcast.getRoomData(roomCapacity).setQueue(0);
         } else
             broadcast.getRoomData(roomCapacity).setQueue(room.getPlayersCount() + 1);
-        json = Application.gson.toJson(broadcast);
-        playersWithNoRoom.forEach(p -> {
-            p.sendString(json);
-        });
+        updateAndBroadcastJson();
 
         // !!!!!!
         room.addPlayer(player);
         // !!!!!!
     }
 
-    public void deletePlayerFromAnyRoom(Player player, boolean keepOnServer) {
-        Room room = allRooms.remove(player);
-        if (room == null) {
-            if (keepOnServer) {
-                player.disconnectBadApi("You cannot leave room until you haven entered one");
-            }
-            playersWithNoRoom.remove(player);
-            return;
-        }
-        if (keepOnServer) {
-            addPlayerWithNoRoom(player);
-        }
-        room.removePlayer(player, false);
-        if (room.getStatus() == STATUS_CREATING) {
-            broadcast.getRoomData(room.getCapacity()).setQueue(room.getPlayersCount());
-            json = Application.gson.toJson(broadcast);
-            playersWithNoRoom.forEach(p -> {
-                p.sendString(json);
-            });
-        }
+    private void updateAndBroadcastJson() {
+        json = Application.gson.toJson(broadcast);
+        playersWithNoRoom.forEach(p -> {
+            p.sendString(json);
+        });
     }
 
     public void addPlayerWithNoRoom(Player player) {
         playersWithNoRoom.add(player);
         player.sendString(json);
-    }
-
-    public ConcurrentHashMap<Player, Room> getAllRooms() {
-        return allRooms;
     }
 
     public void removePlayerWithNoRoom(Player player) {

@@ -10,7 +10,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Stack;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static com.cyclic.configs.Enums.MoveResult.*;
@@ -89,11 +92,21 @@ public class GameField {
         Point p = freeSpawnPoints.get(rand);
         for (int x = (int) (p.x - room.getMoveRadius() * 2); x < p.x + room.getMoveRadius() * 2; x++) {
             for (int y = (int) (p.y - room.getMoveRadius() * 2); y < p.y + room.getMoveRadius() * 2; y++) {
-                freeSpawnPoints.remove(new Point(x,y));
+                freeSpawnPoints.remove(new Point(x, y));
             }
         }
         freeSpawnPoints.remove(p);
         return p;
+    }
+
+    public void addPossibleSpawnPoints(Player player) {
+        Point p = new Point(player.getBeginX(), player.getBeginY());
+        for (int x = (int) (p.x - room.getMoveRadius() * 2); x < p.x + room.getMoveRadius() * 2; x++) {
+            for (int y = (int) (p.y - room.getMoveRadius() * 2); y < p.y + room.getMoveRadius() * 2; y++) {
+                if (x > 0 && x < width && y > 0 && y < height)
+                    freeSpawnPoints.add(new Point(x, y));
+            }
+        }
     }
 
     private boolean checkTurn(Node node) {
