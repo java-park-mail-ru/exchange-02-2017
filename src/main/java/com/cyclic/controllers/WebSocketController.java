@@ -110,6 +110,9 @@ public class WebSocketController extends TextWebSocketHandler {
                 LOG.webSocketLog("Message from " + player.getNickname() + " (Ip " + session.getRemoteAddress() + "). Code: " + webSocketAnswer.getAction());
                 try {
                     switch (webSocketAnswer.getAction()) {
+                        case ACTION_PING:
+                            player.sendDatatype(DATATYPE_PONG);
+                            break;
                         case ACTION_GIVE_ME_ROOM:
                             if (player.getRoom() != null) {
                                 player.disconnectBadApi("You cannot find new room while in another one");
@@ -127,12 +130,14 @@ public class WebSocketController extends TextWebSocketHandler {
                             room.removePlayer(player, false);
                             roomManager.addPlayerWithNoRoom(player);
                             break;
-                        case ACTION_PING:
-                            player.sendDatatype(DATATYPE_PONG);
-                            break;
+
                         case ACTION_GAME_MOVE:
                             if (player.getRoom() == null) {
                                 player.disconnectBadApi("You move while not in the room");
+                                break;
+                            }
+                            if (player.getRoom().isSpectator(player)) {
+                                player.disconnectBadApi("You move while you are spectator");
                                 break;
                             }
                             if (webSocketAnswer.getMove() == null) {
@@ -145,8 +150,6 @@ public class WebSocketController extends TextWebSocketHandler {
                             }
                             player.getRoom().acceptMove(player, webSocketAnswer.getMove());
                             break;
-                        default:
-                            player.disconnectBadApi("Unknown actionCode");
                     }
                 } catch (Exception e) {
                     LOG.errorConsole(e);

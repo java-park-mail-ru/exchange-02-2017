@@ -172,7 +172,7 @@ public class Room {
             for (Node node : player.getNodesMap().keySet()) {
                 field.removeNode(node);
             }
-            if (getPlayersCount() > 1) { // Game did not ended
+            if (getPlayersCount() > 1) { // Game did not end
                 if (pid == player.getId()) {
                     generateNextPid();
                 }
@@ -186,7 +186,7 @@ public class Room {
                 }
                 Player lastPlayer = players.get(0);
                 lastPlayer.sendString(gson.toJson(new WinBroadcast()));
-                RoomManager.accountService.updateUserHighscore(lastPlayer.getId(), lastPlayer.getUnits());
+                RoomManager.accountService.updateUserHighscore(lastPlayer.getNickname(), lastPlayer.getUnits());
                 removePlayer(lastPlayer, false);
                 addSpectator(lastPlayer);
             }
@@ -338,6 +338,14 @@ public class Room {
                 return player;
         }
         return null;
+    }
+
+    public boolean isSpectator(Player player) {
+        return spectators.contains(player);
+    }
+
+    public boolean isPLayer(Player player) {
+        return players.contains(player);
     }
 
     public Enums.RoomStatus getStatus() {

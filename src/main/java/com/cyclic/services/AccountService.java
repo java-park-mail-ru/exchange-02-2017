@@ -22,7 +22,7 @@ public interface AccountService {
 
     User getUserById(Long id);
 
-    int updateUserHighscore(Long userId, long score);
+    int updateUserHighscore(String nickname, long score);
 
     ScoreBoard getScoreBoard(long page);
 

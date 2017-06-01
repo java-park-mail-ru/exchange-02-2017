@@ -70,13 +70,13 @@ public class AccountServiceDB implements AccountService {
     }
 
     @Override
-    public int updateUserHighscore(Long userId, long score) {
+    public int updateUserHighscore(String nickname, long score) {
         String query = new StringBuilder()
                 .append("UPDATE users SET highScore = ? ")
-                .append("WHERE id = ? ;")
+                .append("WHERE login = ? ;")
                 .toString();
         try {
-            template.update(query, userId, score);
+            template.update(query, nickname, score);
         } catch (DuplicateKeyException e) {
             return ERROR_DUPLICATE;
         } catch (DataAccessException e) {
