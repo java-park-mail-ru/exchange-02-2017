@@ -4,7 +4,7 @@ import com.cyclic.models.base.Status;
 import com.cyclic.models.base.User;
 import com.cyclic.models.base.UserView;
 import com.cyclic.services.AccountService;
-import com.cyclic.services.AccountServiceDB;
+import com.cyclic.services.game.GuestManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,17 +28,19 @@ public class AuthController {
 
     private final AccountService accountService;
     private final PasswordEncoder passwordEncoder;
+    private GuestManager guestManager;
 
     @Autowired
-    public AuthController(AccountServiceDB accountService,
+    public AuthController(AccountService accountService,
                           PasswordEncoder passwordEncoder) {
         this.accountService = accountService;
         this.passwordEncoder = passwordEncoder;
+        guestManager = new GuestManager();
     }
 
     @RequestMapping(method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     public ResponseEntity tryAuth(@RequestBody User body, HttpSession httpSession) {
-        if (httpSession.getAttribute("userId") != null) {
+        if (httpSession.getAttribute("nickname") != null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new Status("You are already logged in"));
         }
         String login = body.getLogin();
@@ -53,8 +55,6 @@ public class AuthController {
         if (user == null || !passwordEncoder.matches(password, user.getPassword())) {
             return ResponseEntity.badRequest().body(new Status("Incorrect password. Try again"));
         }
-
-        httpSession.setAttribute("userId", user.getId());
         httpSession.setAttribute("nickname", user.getLogin());
         //authorizationService.add(httpSession, user.getId());
 
@@ -63,12 +63,12 @@ public class AuthController {
 
     @RequestMapping(path = "/temporary", method = RequestMethod.POST, produces = "application/json")
     public ResponseEntity tempUser(HttpSession httpSession) {
-        if (httpSession.getAttribute("userId") != null) {
+        if (httpSession.getAttribute("nickname") != null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new Status("You are already logged in"));
         }
-        String name = "Guest" + httpSession.hashCode();
-        httpSession.setAttribute("userId", (long) -1);
+        String name = guestManager.getNewGuestNick();
         httpSession.setAttribute("nickname", name);
+        httpSession.setAttribute("guest", true);
         //authorizationService.add(httpSession, user.getId());
 
         return ResponseEntity.ok(new UserView("", "", "", name, (long) 0));
@@ -76,10 +76,16 @@ public class AuthController {
 
     @RequestMapping(method = RequestMethod.DELETE, produces = "application/json")
     public ResponseEntity exit(HttpSession httpSession) {
-        if (httpSession.getAttribute("userId") == null) {
+        if (httpSession.getAttribute("nickname") == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new Status("user not authorized"));
         }
-        httpSession.removeAttribute("userId");
+
+        if (httpSession.getAttribute("guest") != null) {
+            String nick = (String) httpSession.getAttribute("nickname");
+            guestManager.freeGuestNick(nick);
+            httpSession.removeAttribute("guest");
+        }
+
         httpSession.removeAttribute("nickname");
         //authorizationService.remove(httpSession);
 

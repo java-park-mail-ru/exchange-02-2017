@@ -27,9 +27,9 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 @RunWith(SpringRunner.class)
 @AutoConfigureTestDatabase(connection = EmbeddedDatabaseConnection.H2)
 @Transactional
-public class AccountServiceDBTest {
+public class AccountServiceTest {
     @Autowired
-    private AccountServiceDB accountService;
+    private AccountService accountService;
 
     @Test
     public void addUserTest() {

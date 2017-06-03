@@ -2,7 +2,6 @@ package com.cyclic.controllers;
 
 import com.cyclic.Application;
 import com.cyclic.services.AccountService;
-import com.cyclic.services.AccountServiceDB;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,7 +22,7 @@ public class HighScoreController {
     private final AccountService accountService;
 
     @Autowired
-    public HighScoreController(AccountServiceDB accountService) {
+    public HighScoreController(AccountService accountService) {
         this.accountService = accountService;
     }
 

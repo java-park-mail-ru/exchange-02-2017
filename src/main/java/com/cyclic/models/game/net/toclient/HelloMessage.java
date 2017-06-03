@@ -10,11 +10,9 @@ import static com.cyclic.configs.Enums.Datatype.DATATYPE_HELLO;
 public class HelloMessage {
     private final Enums.Datatype datatype = DATATYPE_HELLO;
     private String nickname;
-    private long id;
 
-    public HelloMessage(String nickname, long id) {
+    public HelloMessage(String nickname) {
         this.nickname = nickname;
-        this.id = id;
     }
 
     public String getNickname() {
@@ -23,13 +21,5 @@ public class HelloMessage {
 
     public void setNickname(String nickname) {
         this.nickname = nickname;
-    }
-
-    public long getId() {
-        return id;
-    }
-
-    public void setId(long id) {
-        this.id = id;
     }
 }

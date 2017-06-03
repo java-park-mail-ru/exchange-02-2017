@@ -3,7 +3,6 @@ package com.cyclic.controllers;
 import com.cyclic.models.base.Status;
 import com.cyclic.models.base.User;
 import com.cyclic.services.AccountService;
-import com.cyclic.services.AccountServiceDB;
 import com.cyclic.validators.Validator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -28,7 +27,7 @@ public class UserController {
     private final PasswordEncoder passwordEncoder;
 
     @Autowired
-    public UserController(AccountServiceDB accountService, PasswordEncoder passwordEncoder) {
+    public UserController(AccountService accountService, PasswordEncoder passwordEncoder) {
         this.accountService = accountService;
         this.passwordEncoder = passwordEncoder;
     }
@@ -70,18 +69,18 @@ public class UserController {
 
     @RequestMapping(method = RequestMethod.GET, produces = "application/json")
     public ResponseEntity getUser(HttpSession httpSession) {
-        if (httpSession.getAttribute("userId") == null) {
+        if (httpSession.getAttribute("nickname") == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new Status("user not authorized"));
         }
 
-        return ResponseEntity.ok(accountService.getUserById((Long) httpSession.getAttribute("userId")).toView());
+        return ResponseEntity.ok((String) httpSession.getAttribute("nickname"));
     }
 
     @RequestMapping(path = "/{userId}", method = RequestMethod.GET, produces = "application/json")
     public ResponseEntity getUser(@PathVariable(name = "userId") Long userId,
                                   HttpSession httpSession) throws IOException {
 
-        if (httpSession.getAttribute("userId") == null) {
+        if (httpSession.getAttribute("nickname") == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new Status("user not authorized"));
         }
         if (accountService.getUserById(userId) == null)
@@ -94,7 +93,7 @@ public class UserController {
     @RequestMapping(method = RequestMethod.POST, consumes = "application/json")
     public ResponseEntity changeUser(@RequestBody User body, HttpSession httpSession) {
 
-        if (httpSession.getAttribute("userId") == null) {
+        if (httpSession.getAttribute("nickname") == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new Status("user not authorized"));
         }
         Long userId = (Long) httpSession.getAttribute("userId");
