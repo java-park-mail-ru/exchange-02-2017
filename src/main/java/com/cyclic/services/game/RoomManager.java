@@ -30,15 +30,19 @@ public class RoomManager {
         RoomManager.resourceManager = resourceManager;
         RoomManager.accountService = accountService;
         mainRoomConfig = resourceManager.getRoomConfig();
+        int basewidth = mainRoomConfig.getFieldWidth();
+        int baseheight = mainRoomConfig.getFieldHeight();
         playersWithNoRoom = new Vector<>();
         freeRooms = new Room[mainRoomConfig.getPlayersCount() - 1];
         broadcast = new RoomManagerUpdateBroadcast(mainRoomConfig.getPlayersCount() - 1);
         for (int i = 2; i <= resourceManager.getRoomConfig().getPlayersCount(); i++) {
             RoomConfig config = new RoomConfig(resourceManager.getRoomConfig());
             config.setPlayersCount(i);
-            config.setFieldWidth((int) (config.getFieldWidth() * 1.5));
-            config.setFieldHeight((int) (config.getFieldHeight() * 1.5));
-            config.setStartBonusCount((int) (config.getFieldWidth() * config.getFieldHeight() * 0.1));
+            config.setFieldWidth(basewidth);
+            config.setFieldHeight(baseheight);
+            baseheight *= 1.5;
+            basewidth *= 1.5;
+            config.setStartBonusCount((int) (config.getFieldWidth() * config.getFieldHeight() * 0.05));
             freeRooms[i - 2] = new Room(this, config);
         }
         json = Application.gson.toJson(broadcast);

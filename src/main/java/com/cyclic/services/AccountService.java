@@ -78,7 +78,7 @@ public class AccountService {
                 .append("WHERE login = ? ;")
                 .toString();
         try {
-            template.update(query, nickname, score);
+            template.update(query, score, nickname);
         } catch (DuplicateKeyException e) {
             return ERROR_DUPLICATE;
         } catch (DataAccessException e) {

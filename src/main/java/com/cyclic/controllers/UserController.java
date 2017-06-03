@@ -54,6 +54,9 @@ public class UserController {
         if (accountService.getUserByEmail(email) != null) {
             errorBuilder.append("This email is already registered. ");
         }
+        if (login.contains("Guest")) {
+            errorBuilder.append("Login must not contain \"Guest\". ");
+        }
 
         String error = errorBuilder.toString();
         if (error.length() != 0) {
