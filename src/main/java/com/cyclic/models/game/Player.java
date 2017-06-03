@@ -12,7 +12,10 @@ import org.springframework.web.socket.WebSocketSession;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Timer;
+import java.util.TimerTask;
 
+import static com.cyclic.configs.Enums.DisconnectReason.DISCONNECT_PING_TIMEOUT;
 import static com.cyclic.configs.Enums.DisconnectReason.DISCONNECT_REASON_API_HACKER;
 
 /**
@@ -22,10 +25,12 @@ import static com.cyclic.configs.Enums.DisconnectReason.DISCONNECT_REASON_API_HA
  */
 public class Player {
 
+    public static final double PING_TIMEOUT = 10.0;
+
     private String nickname;
     private Long id;
     private int color;
-    private long units;
+    private int units;
     private int beginX = 0;
     private int beginY = 0;
     private transient Room room = null;
@@ -33,6 +38,8 @@ public class Player {
     private transient Gson gson;
     private transient Node mainNode;
     private transient HashMap<Node, HashSet<Node>> nodesMap;
+    private transient Timer moveTimer;
+    private transient PlayerPingTask pingTast;
 
 
     public Player(WebSocketSession webSocketSession, String nickname) {
@@ -40,6 +47,10 @@ public class Player {
         this.gson = new GsonBuilder().create();
         this.nickname = nickname;
         this.nodesMap = new HashMap<>();
+    }
+
+    public void setUnits(int units) {
+        this.units = units;
     }
 
     public int getColor() {
@@ -58,16 +69,16 @@ public class Player {
         return id;
     }
 
+    public void onPing() {
+        moveTimer.cancel();
+        pingTast.cancel();
+        moveTimer = new Timer();
+        pingTast = new PlayerPingTask();
+        moveTimer.schedule(pingTast, (long) PING_TIMEOUT * 1000);
+    }
+
     public void setId(Long id) {
         this.id = id;
-    }
-
-    public long getUnits() {
-        return units;
-    }
-
-    public void setUnits(long units) {
-        this.units = units;
     }
 
     public Room getRoom() {
@@ -161,16 +172,29 @@ public class Player {
         return hashSet;
     }
 
-    public void addToUnits(int count) {
-        units += count;
+    public long towersCount() {
+        return nodesMap != null ? nodesMap.size() : 0;
     }
 
-    public int towersCount() {
-        return nodesMap.size();
+    public long unitsCount() {
+        long units = 0;
+        if (nodesMap != null) {
+            for (Node n : nodesMap.keySet()) {
+                units += n.getValue();
+            }
+        }
+        return units;
     }
 
     public void resetNodesMap() {
         nodesMap = new HashMap<>();
     }
 
+    private class PlayerPingTask extends TimerTask {
+
+        @Override
+        public void run() {
+            disconnect(DISCONNECT_PING_TIMEOUT, "You haven't pinged for a lot of time");
+        }
+    }
 }

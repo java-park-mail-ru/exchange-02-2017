@@ -25,7 +25,7 @@ import static com.cyclic.configs.Enums.RoomStatus.*;
 public class Room {
     private final Enums.Datatype datatype = DATATYPE_ROOMINFO;
     private final LinkedList<Player> players;
-    private final LinkedList<Player> spectators;
+    private transient final LinkedList<Player> spectators;
     private int capacity;
     private transient int startBonusCount;
     private transient int startTowerUnits;
@@ -37,7 +37,6 @@ public class Room {
     private int fieldHeight;
     private Long pid;
     private Enums.RoomStatus status;
-    private long roomID;
 
     private transient Gson gson;
     private transient GameField field;
@@ -49,8 +48,7 @@ public class Room {
     private transient Queue<Player> moveQueue;
 
 
-    public Room(long roomID, RoomManager roomManager, RoomConfig roomConfig) {
-        this.roomID = roomID;
+    public Room(RoomManager roomManager, RoomConfig roomConfig) {
         this.roomConfig = roomConfig;
         this.roomManager = roomManager;
         capacity = roomConfig.getPlayersCount();
@@ -156,11 +154,14 @@ public class Room {
      */
     public synchronized void removePlayer(Player player, boolean duringMove) {
         if (players.remove(player)) {
+            long id = player.getId();
             player.setRoom(null);
             player.setId(null);
             moveQueue.remove(player);
             freeColors.add(player.getColor());
             if (status == STATUS_CREATING) {
+                roomManager.getBroadcast().getRoomData(capacity).setQueue(getPlayersCount());
+                roomManager.updateAndBroadcastJson();
                 field.addPossibleSpawnPoints(player);
                 broadcastRoomUpdate();
                 return;
@@ -173,11 +174,11 @@ public class Room {
                 field.removeNode(node);
             }
             if (getPlayersCount() > 1) { // Game did not end
-                if (pid == player.getId()) {
+                if (pid == id) {
                     generateNextPid();
                 }
                 if (!duringMove) {
-                    broadcast(gson.toJson(new PlayerDisconnectBroadcast(player, pid)));
+                    broadcast(gson.toJson(new PlayerDisconnectBroadcast(id, pid)));
                 }
             } else { // Player WIN!!
                 status = STATUS_FINISHED;
@@ -186,7 +187,7 @@ public class Room {
                 }
                 Player lastPlayer = players.get(0);
                 lastPlayer.sendString(gson.toJson(new WinBroadcast()));
-                RoomManager.accountService.updateUserHighscore(lastPlayer.getNickname(), lastPlayer.getUnits());
+                RoomManager.accountService.updateUserHighscore(lastPlayer.getNickname(), lastPlayer.unitsCount());
                 removePlayer(lastPlayer, false);
                 addSpectator(lastPlayer);
             }
@@ -251,8 +252,9 @@ public class Room {
                 moveBroadcast.setNextpid(pid);
 
                 for (Player p : players) {
-                    if (moveBroadcast.getDeadpid() == null || p.getId() != moveBroadcast.getDeadpid())
-                        moveBroadcast.addScores(new PlayerScore(p.getId(), p.getUnits(), p.towersCount()));
+                    if (moveBroadcast.getDeadpid() == null || p.getId() != moveBroadcast.getDeadpid()) {
+                        moveBroadcast.addScores(new PlayerScore(p.getId(), p.unitsCount(), p.towersCount()));
+                    }
                 }
 
                 moveBroadcast.sortScores();
@@ -261,7 +263,7 @@ public class Room {
                 if (moveBroadcast.getDeadpid() != null) {
                     Player loser = getPlayer(moveBroadcast.getDeadpid());
                     removePlayer(loser, true);
-                    addSpectator(player);
+                    addSpectator(loser);
                 }
 
                 if (getPlayersCount() != 0) {
@@ -326,10 +328,6 @@ public class Room {
 
     public int getFieldHeight() {
         return fieldHeight;
-    }
-
-    public long getRoomID() {
-        return roomID;
     }
 
     public Player getPlayer(long id) {

@@ -13,8 +13,8 @@ public class PlayerDisconnectBroadcast {
     private long pid;
     private Long giveMoveToPid;
 
-    public PlayerDisconnectBroadcast(Player player, Long giveMoveToPid) {
-        this.pid = player.getId();
+    public PlayerDisconnectBroadcast(long pid, Long giveMoveToPid) {
+        this.pid = pid;
         this.giveMoveToPid = giveMoveToPid;
     }
 }

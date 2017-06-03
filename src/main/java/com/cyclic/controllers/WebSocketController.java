@@ -6,7 +6,7 @@ import com.cyclic.models.game.Room;
 import com.cyclic.models.game.net.fromclient.WebSocketAnswer;
 import com.cyclic.models.game.net.toclient.ConnectionError;
 import com.cyclic.models.game.net.toclient.HelloMessage;
-import com.cyclic.services.AccountServiceDB;
+import com.cyclic.services.AccountService;
 import com.cyclic.services.game.RoomManager;
 import com.cyclic.services.game.SessionManager;
 import com.google.gson.Gson;
@@ -29,10 +29,10 @@ public class WebSocketController extends TextWebSocketHandler {
     private SessionManager sessionManager;
     private Gson gson;
 
-    private AccountServiceDB accountService;
+    private AccountService accountService;
 
     @Autowired
-    public WebSocketController(RoomManager roomManager, AccountServiceDB accountService) {
+    public WebSocketController(RoomManager roomManager, AccountService accountService) {
         this.roomManager = roomManager;
         this.accountService = accountService;
         sessionManager = new SessionManager();
@@ -45,7 +45,7 @@ public class WebSocketController extends TextWebSocketHandler {
     }
 
     @Override
-    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
+    public synchronized void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
         Player player = sessionManager.getPlayerForSession(session);
         if (player != null) {
             Room room = player.getRoom();
@@ -63,7 +63,7 @@ public class WebSocketController extends TextWebSocketHandler {
     }
 
     @Override
-    public void afterConnectionEstablished(WebSocketSession session) throws Exception {
+    public synchronized void afterConnectionEstablished(WebSocketSession session) throws Exception {
         String nickname = (String) session.getAttributes().get("nickname");
 
         if (nickname == null) {
@@ -73,7 +73,7 @@ public class WebSocketController extends TextWebSocketHandler {
             return;
         }
         if (sessionManager.nickIsInGame(nickname)) {
-            LOG.errorConsole("User tryes to play from different PC");
+            LOG.errorConsole("User tries to play from different PC");
             session.sendMessage(new TextMessage(gson.toJson(new ConnectionError(DISCONNECT_REASON_NOT_LOGINED, "You are already playing from other PC!"))));
             session.close();
             return;
@@ -107,52 +107,54 @@ public class WebSocketController extends TextWebSocketHandler {
                     player.disconnectBadApi("Bad actionCode");
                     return;
                 }
-                LOG.webSocketLog("Message from " + player.getNickname() + " (Ip " + session.getRemoteAddress() + "). Code: " + webSocketAnswer.getAction());
-                try {
-                    switch (webSocketAnswer.getAction()) {
-                        case ACTION_PING:
-                            player.sendDatatype(DATATYPE_PONG);
-                            break;
-                        case ACTION_GIVE_ME_ROOM:
-                            if (player.getRoom() != null) {
-                                player.disconnectBadApi("You cannot find new room while in another one");
+                synchronized (player) {
+                    //LOG.webSocketLog("Message from " + player.getNickname() + " (Ip " + session.getRemoteAddress() + "). Code: " + webSocketAnswer.getAction());
+                    try {
+                        switch (webSocketAnswer.getAction()) {
+                            case ACTION_PING:
+                                player.sendDatatype(DATATYPE_PONG);
                                 break;
-                            }
-                            roomManager.findRoomForThisGuy(player, webSocketAnswer.getRoomCapacity());
-                            break;
-                        case ACTION_EXIT_ROOM:
-                            Room room = player.getRoom();
-                            if (room == null) {
-                                player.disconnectBadApi("Cannot leave room if you do not have one!");
+                            case ACTION_GIVE_ME_ROOM:
+                                if (player.getRoom() != null) {
+                                    player.disconnectBadApi("You cannot find new room while in another one");
+                                    break;
+                                }
+                                roomManager.findRoomForThisGuy(player, webSocketAnswer.getRoomCapacity());
                                 break;
-                            }
-                            room.removeSpectator(player);
-                            room.removePlayer(player, false);
-                            roomManager.addPlayerWithNoRoom(player);
-                            break;
+                            case ACTION_EXIT_ROOM:
+                                Room room = player.getRoom();
+                                if (room == null) {
+                                    player.disconnectBadApi("Cannot leave room if you do not have one!");
+                                    break;
+                                }
+                                room.removeSpectator(player);
+                                room.removePlayer(player, false);
+                                roomManager.addPlayerWithNoRoom(player);
+                                break;
 
-                        case ACTION_GAME_MOVE:
-                            if (player.getRoom() == null) {
-                                player.disconnectBadApi("You move while not in the room");
+                            case ACTION_GAME_MOVE:
+                                if (player.getRoom() == null) {
+                                    player.disconnectBadApi("You move while not in the room");
+                                    break;
+                                }
+                                if (player.getRoom().isSpectator(player)) {
+                                    player.disconnectBadApi("You move while you are spectator");
+                                    break;
+                                }
+                                if (webSocketAnswer.getMove() == null) {
+                                    player.disconnectBadApi("You need to specify move!");
+                                    break;
+                                }
+                                if (!webSocketAnswer.getMove().isValid()) {
+                                    player.disconnectBadApi("Your move is not valid!");
+                                    break;
+                                }
+                                player.getRoom().acceptMove(player, webSocketAnswer.getMove());
                                 break;
-                            }
-                            if (player.getRoom().isSpectator(player)) {
-                                player.disconnectBadApi("You move while you are spectator");
-                                break;
-                            }
-                            if (webSocketAnswer.getMove() == null) {
-                                player.disconnectBadApi("You need to specify move!");
-                                break;
-                            }
-                            if (!webSocketAnswer.getMove().isValid()) {
-                                player.disconnectBadApi("Your move is not valid!");
-                                break;
-                            }
-                            player.getRoom().acceptMove(player, webSocketAnswer.getMove());
-                            break;
+                        }
+                    } catch (Exception e) {
+                        LOG.errorConsole(e);
                     }
-                } catch (Exception e) {
-                    LOG.errorConsole(e);
                 }
             } else {
                 session.close();

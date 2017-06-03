@@ -11,9 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Vector;
-import java.util.concurrent.ConcurrentHashMap;
-
-import static com.cyclic.configs.Enums.RoomStatus.STATUS_CREATING;
 
 /**
  * Created by serych on 02.04.17.
@@ -25,7 +22,6 @@ public class RoomManager {
     private static RoomConfig mainRoomConfig;
     private Vector<Player> playersWithNoRoom;
     private Room[] freeRooms;
-    private long lastRoomId = 0;
     private String json = "";
     RoomManagerUpdateBroadcast broadcast;
 
@@ -40,8 +36,10 @@ public class RoomManager {
         for (int i = 2; i <= resourceManager.getRoomConfig().getPlayersCount(); i++) {
             RoomConfig config = new RoomConfig(resourceManager.getRoomConfig());
             config.setPlayersCount(i);
-            freeRooms[i - 2] = new Room(lastRoomId, this, config);
-            lastRoomId++;
+            config.setFieldWidth((int) (config.getFieldWidth() * 1.5));
+            config.setFieldHeight((int) (config.getFieldHeight() * 1.5));
+            config.setStartBonusCount((int) (config.getFieldWidth() * config.getFieldHeight() * 0.1));
+            freeRooms[i - 2] = new Room(this, config);
         }
         json = Application.gson.toJson(broadcast);
     }
@@ -72,7 +70,7 @@ public class RoomManager {
         playersWithNoRoom.remove(player);
 
         if (room.isAlmostFull()) {
-            freeRooms[roomCapacity - 2] = new Room(lastRoomId, this, room.getRoomConfig());
+            freeRooms[roomCapacity - 2] = new Room(this, room.getRoomConfig());
             broadcast.getRoomData(roomCapacity).setQueue(0);
         } else
             broadcast.getRoomData(roomCapacity).setQueue(room.getPlayersCount() + 1);
@@ -83,11 +81,15 @@ public class RoomManager {
         // !!!!!!
     }
 
-    private void updateAndBroadcastJson() {
+    public void updateAndBroadcastJson() {
         json = Application.gson.toJson(broadcast);
         playersWithNoRoom.forEach(p -> {
             p.sendString(json);
         });
+    }
+
+    public RoomManagerUpdateBroadcast getBroadcast() {
+        return broadcast;
     }
 
     public void addPlayerWithNoRoom(Player player) {
