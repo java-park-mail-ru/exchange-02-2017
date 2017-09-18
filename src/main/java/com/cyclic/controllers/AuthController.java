@@ -1,15 +1,18 @@
 package com.cyclic.controllers;
 
+import com.cyclic.models.base.Status;
+import com.cyclic.models.base.User;
+import com.cyclic.models.base.UserView;
+import com.cyclic.services.AccountService;
+import com.cyclic.services.game.GuestManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.*;
-import com.cyclic.models.Status;
-import com.cyclic.services.AccountService;
-import com.cyclic.models.User;
-import com.cyclic.services.AccountServiceDB;
-import com.cyclic.services.AuthorizedUsersService;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpSession;
 
@@ -20,59 +23,71 @@ import javax.servlet.http.HttpSession;
 
 @SuppressWarnings({"WeakerAccess", "DefaultFileTemplate"})
 @RestController
-@CrossOrigin(
-        methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE, RequestMethod.OPTIONS},
-        maxAge = 3600,
-        allowedHeaders = {"Content-Type", "Origin", "X-Requested-With", "Accept"},
-        allowCredentials = "true",
-        origins = "*"
-)
 @RequestMapping(path = "/api/login")
 public class AuthController {
 
     private final AccountService accountService;
-    private final AuthorizedUsersService authorizationService;
     private final PasswordEncoder passwordEncoder;
+    private GuestManager guestManager;
 
     @Autowired
-    public AuthController(AccountServiceDB accountService, AuthorizedUsersService authorizationService,
-                          PasswordEncoder passwordEncoder){
+    public AuthController(AccountService accountService,
+                          PasswordEncoder passwordEncoder) {
         this.accountService = accountService;
-        this.authorizationService = authorizationService;
         this.passwordEncoder = passwordEncoder;
+        guestManager = new GuestManager();
     }
 
     @RequestMapping(method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     public ResponseEntity tryAuth(@RequestBody User body, HttpSession httpSession) {
+        if (httpSession.getAttribute("nickname") != null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new Status("You are already logged in"));
+        }
         String login = body.getLogin();
         String password = body.getPassword();
 
-        if(login == null){
-            return ResponseEntity.badRequest().body(new Status("incorrect login"));
+        if (login == null) {
+            return ResponseEntity.badRequest().body(new Status("You need to specify username"));
         }
         login = login.trim();
 
         User user = accountService.getUserByLogin(login);
-        if(user == null){
-            return ResponseEntity.badRequest().body(new Status("incorrect login"));
+        if (user == null || !passwordEncoder.matches(password, user.getPassword())) {
+            return ResponseEntity.badRequest().body(new Status("Incorrect password. Try again"));
         }
-        if(!passwordEncoder.matches(password, user.getPassword())){
-            return ResponseEntity.badRequest().body(new Status("incorrect password"));
+        httpSession.setAttribute("nickname", user.getLogin());
+        //authorizationService.add(httpSession, user.getId());
+
+        return ResponseEntity.ok(user.toView());
+    }
+
+    @RequestMapping(path = "/temporary", method = RequestMethod.POST, produces = "application/json")
+    public ResponseEntity tempUser(HttpSession httpSession) {
+        if (httpSession.getAttribute("nickname") != null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new Status("You are already logged in"));
         }
+        String name = guestManager.getNewGuestNick();
+        httpSession.setAttribute("nickname", name);
+        httpSession.setAttribute("guest", true);
+        //authorizationService.add(httpSession, user.getId());
 
-        httpSession.setAttribute("userId", user.getId());
-        authorizationService.add(httpSession, user.getId());
-
-        return ResponseEntity.ok(new Status("success login"));
+        return ResponseEntity.ok(new UserView("", "", "", name, (long) 0));
     }
 
     @RequestMapping(method = RequestMethod.DELETE, produces = "application/json")
     public ResponseEntity exit(HttpSession httpSession) {
-        if(httpSession.getAttribute("userId")==null) {
+        if (httpSession.getAttribute("nickname") == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new Status("user not authorized"));
         }
-        httpSession.removeAttribute("userId");
-        authorizationService.remove(httpSession);
+
+        if (httpSession.getAttribute("guest") != null) {
+            String nick = (String) httpSession.getAttribute("nickname");
+            guestManager.freeGuestNick(nick);
+            httpSession.removeAttribute("guest");
+        }
+
+        httpSession.removeAttribute("nickname");
+        //authorizationService.remove(httpSession);
 
         return ResponseEntity.ok(new Status("success exited"));
     }

@@ -1,15 +1,14 @@
 package com.cyclic.controllers;
 
+import com.cyclic.models.base.Status;
+import com.cyclic.models.base.User;
+import com.cyclic.services.AccountService;
+import com.cyclic.validators.Validator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
-import com.cyclic.models.User;
-import com.cyclic.models.Status;
-import com.cyclic.services.AccountService;
-import com.cyclic.services.AccountServiceDB;
-import com.cyclic.validators.Validator;
 
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
@@ -21,13 +20,6 @@ import java.io.IOException;
 
 @SuppressWarnings({"WeakerAccess", "DefaultFileTemplate"})
 @RestController
-@CrossOrigin(
-        methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE, RequestMethod.OPTIONS},
-        maxAge = 3600,
-        allowedHeaders = {"Content-Type", "Origin", "X-Requested-With", "Accept"},
-        allowCredentials = "true",
-        origins = "*"
-)
 @RequestMapping(path = "/api/user")
 public class UserController {
 
@@ -35,35 +27,43 @@ public class UserController {
     private final PasswordEncoder passwordEncoder;
 
     @Autowired
-    public UserController(AccountServiceDB accountService, PasswordEncoder passwordEncoder){
+    public UserController(AccountService accountService, PasswordEncoder passwordEncoder) {
         this.accountService = accountService;
         this.passwordEncoder = passwordEncoder;
     }
 
     @RequestMapping(method = RequestMethod.PUT, consumes = "application/json", produces = "application/json")
-    public ResponseEntity registration(@RequestBody User body){
+    public ResponseEntity registration(@RequestBody User body) {
         String email = body.getEmail();
         String login = body.getLogin();
         String password = body.getPassword();
+        StringBuilder errorBuilder = new StringBuilder();
 
-        if(login == null || !Validator.login(login.trim())){
-            return ResponseEntity.badRequest().body(new Status("invalid login"));
+        if (login == null || !Validator.login(login.trim())) {
+            errorBuilder.append("Login must not be null. ");
         }
+        if (email == null || !Validator.email(email)) {
+            errorBuilder.append("Email must not be null. ");
+        }
+        if (password == null || password.length() == 0) {
+            errorBuilder.append("Password must not be null. ");
+        }
+        if (accountService.getUserByLogin(login) != null) {
+            errorBuilder.append("This username is already registered. ");
+        }
+        if (accountService.getUserByEmail(email) != null) {
+            errorBuilder.append("This email is already registered. ");
+        }
+        if (login.contains("Guest")) {
+            errorBuilder.append("Login must not contain \"Guest\". ");
+        }
+
+        String error = errorBuilder.toString();
+        if (error.length() != 0) {
+            return ResponseEntity.badRequest().body(new Status(error));
+        }
+
         login = login.trim();
-
-        if(password == null || password.length() == 0){
-            return ResponseEntity.badRequest().body(new Status("invalid password"));
-        }
-        if(email == null || !Validator.email(email)){
-            return ResponseEntity.badRequest().body(new Status("invalid email"));
-        }
-
-        if(accountService.getUserByLogin(login) != null){
-            return ResponseEntity.badRequest().body(new Status("login already used"));
-        }
-        if(accountService.getUserByEmail(email) != null){
-            return ResponseEntity.badRequest().body(new Status("email already used"));
-        }
 
         body.setPassword(passwordEncoder.encode(password));
         accountService.addUser(body);
@@ -71,22 +71,22 @@ public class UserController {
     }
 
     @RequestMapping(method = RequestMethod.GET, produces = "application/json")
-    public ResponseEntity getUser(HttpSession httpSession){
-        if(httpSession.getAttribute("userId") == null){
+    public ResponseEntity getUser(HttpSession httpSession) {
+        if (httpSession.getAttribute("nickname") == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new Status("user not authorized"));
         }
 
-        return ResponseEntity.ok(accountService.getUserById((Long) httpSession.getAttribute("userId")));
+        return ResponseEntity.ok((String) httpSession.getAttribute("nickname"));
     }
 
     @RequestMapping(path = "/{userId}", method = RequestMethod.GET, produces = "application/json")
     public ResponseEntity getUser(@PathVariable(name = "userId") Long userId,
-                                               HttpSession httpSession) throws IOException {
+                                  HttpSession httpSession) throws IOException {
 
-        if(httpSession.getAttribute("userId") == null){
+        if (httpSession.getAttribute("nickname") == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new Status("user not authorized"));
         }
-        if(accountService.getUserById(userId) == null)
+        if (accountService.getUserById(userId) == null)
             return ResponseEntity.badRequest().body(new Status("user not exist"));
 
         return ResponseEntity.ok(accountService.getUserById(userId).toView());
@@ -94,39 +94,39 @@ public class UserController {
 
 
     @RequestMapping(method = RequestMethod.POST, consumes = "application/json")
-    public ResponseEntity changeUser(@RequestBody User body, HttpSession httpSession){
+    public ResponseEntity changeUser(@RequestBody User body, HttpSession httpSession) {
 
-        if(httpSession.getAttribute("userId") == null){
+        if (httpSession.getAttribute("nickname") == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new Status("user not authorized"));
         }
         Long userId = (Long) httpSession.getAttribute("userId");
         User user = accountService.getUserById(userId);
 
-        if(body.getEmail() != null) {
+        if (body.getEmail() != null) {
             if (!Validator.email(body.getEmail())) {
                 return ResponseEntity.badRequest().body(new Status("incorrect email"));
             }
-            if(accountService.getUserByEmail(body.getEmail()) != null){
+            if (accountService.getUserByEmail(body.getEmail()) != null) {
                 return ResponseEntity.badRequest().body(new Status("email already used"));
             }
             user.setEmail(body.getEmail());
         }
-        if(body.getLogin() != null) {
+        if (body.getLogin() != null) {
             if (!Validator.login(body.getLogin())) {
                 return ResponseEntity.badRequest().body(new Status("incorrect login"));
             }
-            if(accountService.getUserByLogin(body.getLogin()) != null){
+            if (accountService.getUserByLogin(body.getLogin()) != null) {
                 return ResponseEntity.badRequest().body(new Status("login already used"));
             }
             user.setLogin(body.getLogin());
         }
-        if(body.getFirstName() != null) {
+        if (body.getFirstName() != null) {
             user.setFirstName(body.getFirstName());
         }
-        if(body.getLastName() != null) {
+        if (body.getLastName() != null) {
             user.setLastName(body.getLastName());
         }
-        if(body.getPassword() != null && body.getPassword().length()>0) {
+        if (body.getPassword() != null && body.getPassword().length() > 0) {
             user.setPassword(passwordEncoder.encode(body.getPassword()));
         }
 

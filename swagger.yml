@@ -1,7 +1,7 @@
 swagger: '2.0'
 info:
   description: |
-    This is a server for the Cyclic Game.
+    This is action server for the Cyclic Game.
   version: "0.1.0"
   title: Cyclic Game Server Api
 
@@ -77,18 +77,18 @@ paths:
           schema:
             $ref: '#/definitions/ApiResponse'
 
-  /user/{id}:
+  /user/{pid}:
    get:
       tags:
       - user
       summary: Получение данных
-      description: Получение данных пользователя по id
+      description: Получение данных пользователя по pid
       produces:
       - application/json
       parameters:
       - in: path
-        name: id
-        description: User id
+        name: pid
+        description: User pid
         required: true
         type: integer
         format: int64
@@ -144,7 +144,7 @@ definitions:
   User:
     type: object
     properties:
-      id:
+      pid:
         type: integer
         format: int64
         readOnly: true
@@ -163,7 +163,7 @@ definitions:
   UserView:
     type: object
     properties:
-      id:
+      pid:
         type: integer
         format: int64
         readOnly: true

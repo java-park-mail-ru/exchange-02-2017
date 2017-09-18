@@ -4,5 +4,6 @@ CREATE TABLE users (
   email VARCHAR(128) UNIQUE NOT NULL ,
   password VARCHAR(256) NOT NULL ,
   firstName VARCHAR(128) ,
-  lastName VARCHAR(128)
+  lastName VARCHAR(128),
+  highScore INTEGER DEFAULT 0
 );

@@ -1,4 +1,4 @@
-package com.cyclic.models;
+package com.cyclic.models.base;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -16,7 +16,7 @@ public class Status {
     private final String status;
 
     @JsonCreator
-    public Status(@JsonProperty("status") String status){
+    public Status(@JsonProperty("status") String status) {
         this.status = status;
     }
 
